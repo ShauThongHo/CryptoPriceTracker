@@ -6,7 +6,7 @@ echo "🔄 更新 Android 服务器代码..."
 echo ""
 
 # 1. 进入项目目录
-cd ~/CryptoPrice || { echo "❌ 找不到项目目录"; exit 1; }
+cd ~/crypto-server || { echo "❌ 找不到项目目录"; exit 1; }
 
 # 2. 备份数据库（如果存在）
 if [ -f "crypto-backend/database.json" ]; then
