@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { 
   initDatabase, 
   closeDatabase, 
@@ -25,6 +27,10 @@ import {
   replaceFullSyncState
 } from './db.js';
 import { updatePrices, getTrackedCoins } from './fetcher.js';
+
+// ES Module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,7 +65,12 @@ updatePrices().then(result => {
 app.use(cors({ origin: '*' })); // Allow all origins for LAN access
 app.use(express.json());
 
-// Request logging middleware
+// Serve static files from React build (if available)
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+console.log(`[STATIC] 📁 Serving frontend from: ${distPath}`);
+
+// Request logging middleware (after static to avoid logging static files)
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${req.method} ${req.path}`);
@@ -473,7 +484,39 @@ app.delete('/api/assets/:id', (req, res) => {
   }
 });
 
-// 404 handler
+// ==================== SPA CATCH-ALL ====================
+// This MUST be after all API routes but before 404 handler
+// Serves index.html for any route not matched above (React Router support)
+app.get('*', (req, res) => {
+  // Only serve index.html for non-API routes
+  if (!req.path.startsWith('/api') && 
+      !req.path.startsWith('/prices') && 
+      !req.path.startsWith('/history') && 
+      !req.path.startsWith('/status') && 
+      !req.path.startsWith('/health') && 
+      !req.path.startsWith('/coins') && 
+      !req.path.startsWith('/fetch') && 
+      !req.path.startsWith('/db')) {
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('[SPA] Error serving index.html:', err);
+        res.status(404).json({
+          error: 'Frontend not deployed',
+          message: 'Run build-and-deploy script first',
+        });
+      }
+    });
+  } else {
+    // API routes that don't exist fall through to 404 handler
+    res.status(404).json({
+      error: 'API endpoint not found',
+      path: req.path,
+    });
+  }
+});
+
+// 404 handler (rarely hit now due to catch-all above)
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',

@@ -69,10 +69,10 @@ interface BackendPriceResponse {
 
 export class PriceService {
   private static instance: PriceService;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  private readonly RATE_LIMIT_DELAY = 1000; // 1 second between requests
-  private readonly REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes interval
-  private lastFetchTime: Record<string, number> = {};
+  // private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  // private readonly RATE_LIMIT_DELAY = 1000; // 1 second between requests
+  // private readonly REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes interval
+  // private lastFetchTime: Record<string, number> = {};
   private lastRefreshSlot: number = 0; // Last 5-minute time slot that was refreshed
 
   private constructor() {}
@@ -164,12 +164,12 @@ export class PriceService {
   /**
    * Check if cached price is still valid
    */
-  private async isCacheValid(symbol: string): Promise<boolean> {
-    const cachedPrice = await dbOperations.getPrice(symbol);
-    if (!cachedPrice) return false;
-    
-    return !dbOperations.isPriceStale(cachedPrice);
-  }
+  // private async isCacheValid(symbol: string): Promise<boolean> {
+  //   const cachedPrice = await dbOperations.getPrice(symbol);
+  //   if (!cachedPrice) return false;
+  //   
+  //   return !dbOperations.isPriceStale(cachedPrice);
+  // }
 
   /**
    * Fetch prices from backend server
@@ -352,61 +352,61 @@ export class PriceService {
   /**
    * Fetch price from CoinGecko API (single coin - use for fallback only)
    */
-  private async fetchPriceFromAPI(symbol: string): Promise<{ price: number; isFallback: boolean } | null> {
-    try {
-      const coinId = await this.symbolToId(symbol);
-      const url = `${COINGECKO_API_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`;
-      
-      const response = await fetch(url);
-      if (!response.ok) {
-        // On error, return cached price as fallback
-        const cachedPrice = await dbOperations.getPrice(symbol);
-        if (cachedPrice) {
-          return { price: cachedPrice.priceUsd, isFallback: true };
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  // private async fetchPriceFromAPI(symbol: string): Promise<{ price: number; isFallback: boolean } | null> {
+  //   try {
+  //     const coinId = await this.symbolToId(symbol);
+  //     const url = `${COINGECKO_API_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`;
+  //     
+  //     const response = await fetch(url);
+  //     if (!response.ok) {
+  //       // On error, return cached price as fallback
+  //       const cachedPrice = await dbOperations.getPrice(symbol);
+  //       if (cachedPrice) {
+  //         return { price: cachedPrice.priceUsd, isFallback: true };
+  //       }
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
 
-      const data: CoinGeckoPriceResponse = await response.json();
-      
-      if (data[coinId] && data[coinId].usd) {
-        const price = data[coinId].usd;
-        
-        // Cache the price
-        await dbOperations.upsertPrice({
-          id: symbol,
-          symbol: symbol,
-          priceUsd: price,
-        });
-        
-        // Update to current time slot
-        this.lastRefreshSlot = this.getCurrentRefreshSlot();
-        
-        // Trigger portfolio snapshot save (async, don't await)
-        this.savePortfolioSnapshot().catch(err => 
-          console.error('Failed to save portfolio snapshot:', err)
-        );
-        
-        return { price, isFallback: false };
-      }
-      
-      // Try fallback if no data
-      const cachedPrice = await dbOperations.getPrice(symbol);
-      if (cachedPrice) {
-        return { price: cachedPrice.priceUsd, isFallback: true };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error(`Error fetching price for ${symbol}:`, error);
-      // Return cached price as fallback
-      const cachedPrice = await dbOperations.getPrice(symbol);
-      if (cachedPrice) {
-        return { price: cachedPrice.priceUsd, isFallback: true };
-      }
-      return null;
-    }
-  }
+  //     const data: CoinGeckoPriceResponse = await response.json();
+  //     
+  //     if (data[coinId] && data[coinId].usd) {
+  //       const price = data[coinId].usd;
+  //       
+  //       // Cache the price
+  //       await dbOperations.upsertPrice({
+  //         id: symbol,
+  //         symbol: symbol,
+  //         priceUsd: price,
+  //       });
+  //       
+  //       // Update to current time slot
+  //       this.lastRefreshSlot = this.getCurrentRefreshSlot();
+  //       
+  //       // Trigger portfolio snapshot save (async, don't await)
+  //       this.savePortfolioSnapshot().catch(err => 
+  //         console.error('Failed to save portfolio snapshot:', err)
+  //       );
+  //       
+  //       return { price, isFallback: false };
+  //     }
+  //     
+  //     // Try fallback if no data
+  //     const cachedPrice = await dbOperations.getPrice(symbol);
+  //     if (cachedPrice) {
+  //       return { price: cachedPrice.priceUsd, isFallback: true };
+  //     }
+  //     
+  //     return null;
+  //   } catch (error) {
+  //     console.error(`Error fetching price for ${symbol}:`, error);
+  //     // Return cached price as fallback
+  //     const cachedPrice = await dbOperations.getPrice(symbol);
+  //     if (cachedPrice) {
+  //       return { price: cachedPrice.priceUsd, isFallback: true };
+  //     }
+  //     return null;
+  //   }
+  // }
 
   /**
    * Get price for a single crypto symbol

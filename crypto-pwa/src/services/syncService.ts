@@ -153,7 +153,7 @@ export class SyncService {
       console.log(`[SyncService] Pushing ${wallets.length} wallets, ${assets.length} assets...`);
 
       // Convert frontend format to backend format
-      const backendWallets = wallets.map((w) => ({
+      const backendWallets = wallets.map((w: any) => ({
         id: w.id,
         name: w.name,
         type: w.type,
@@ -162,7 +162,7 @@ export class SyncService {
         created_at: w.createdAt ? Math.floor(w.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       }));
 
-      const backendAssets = assets.map((a) => ({
+      const backendAssets = assets.map((a: any) => ({
         id: a.id,
         wallet_id: a.walletId,
         symbol: a.symbol,

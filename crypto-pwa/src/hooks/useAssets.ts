@@ -60,7 +60,7 @@ export function useAssetOperations() {
     // Push to server in background
     if (syncService.isSyncEnabled()) {
       try {
-        const serverAsset = await syncService.createAsset(asset);
+        const serverAsset = await syncService.createAsset(asset) as { id: number } | null;
         // Update local ID to match server ID if different
         if (serverAsset && serverAsset.id !== localId) {
           console.log(`[Asset] Syncing ID: local=${localId}, server=${serverAsset.id}`);

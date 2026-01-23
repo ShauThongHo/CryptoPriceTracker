@@ -41,7 +41,7 @@ export function useWalletOperations() {
     // Push to server in background
     if (syncService.isSyncEnabled()) {
       try {
-        const serverWallet = await syncService.createWallet(wallet);
+        const serverWallet = await syncService.createWallet(wallet) as { id: number } | null;
         // Update local ID to match server ID if different
         if (serverWallet && serverWallet.id !== localId) {
           console.log(`[Wallet] Syncing ID: local=${localId}, server=${serverWallet.id}`);
