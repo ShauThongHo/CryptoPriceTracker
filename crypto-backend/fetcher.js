@@ -3,13 +3,24 @@ import { insertPriceHistory, upsertLatestPrice } from './db.js';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-// Coins to track (CoinGecko IDs)
+// Coins to track (CoinGecko IDs) - expanded list
 const TRACKED_COINS = [
   'bitcoin',
   'ethereum',
   'crypto-com-chain',
   'solana',
-  'binancecoin'
+  'binancecoin',
+  'tether',
+  'usd-coin',
+  'compound-governance-token',
+  'polygon-ecosystem-token',
+  'xpin-network',
+  'tether-gold',
+  'usd1-wlfi',
+  'xdai',
+  'staked-ether',
+  'wrapped-bitcoin',
+  'matic-network'
 ];
 
 /**

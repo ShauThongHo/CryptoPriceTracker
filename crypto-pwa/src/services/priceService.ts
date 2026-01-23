@@ -32,6 +32,9 @@ const SYMBOL_TO_ID_MAP: Record<string, string> = {
 };
 
 // Reverse mapping: CoinGecko ID to Symbol (for backend responses)
+// Note: Currently unused as we now use /prices/batch with direct symbol mapping
+// Kept for backward compatibility
+/*
 const ID_TO_SYMBOL_MAP: Record<string, string> = {
   'bitcoin': 'BTC',
   'ethereum': 'ETH',
@@ -50,6 +53,7 @@ const ID_TO_SYMBOL_MAP: Record<string, string> = {
   'wrapped-bitcoin': 'WBTC',
   'matic-network': 'MATIC',
 };
+*/
 
 interface CoinGeckoPriceResponse {
   [coinId: string]: {
@@ -180,12 +184,27 @@ export class PriceService {
     if (symbols.length === 0) return priceMap;
     
     try {
-      const url = `${BACKEND_API_BASE}/prices`;
-      console.log(`[priceService] Fetching from backend:`, url);
+      // Convert symbols to CoinGecko IDs
+      const coinIds: string[] = [];
+      const symbolToCoinId = new Map<string, string>();
+      
+      for (const symbol of symbols) {
+        const coinId = await this.symbolToId(symbol);
+        symbolToCoinId.set(symbol, coinId);
+        if (!coinIds.includes(coinId)) {
+          coinIds.push(coinId);
+        }
+      }
+      
+      const url = `${BACKEND_API_BASE}/prices/batch`;
+      console.log(`[priceService] Fetching ${symbols.length} coins from backend:`, url);
+      console.log(`[priceService] Symbols:`, symbols);
+      console.log(`[priceService] CoinGecko IDs:`, coinIds);
       
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coin_ids: coinIds })
       });
       
       if (!response.ok) {
@@ -199,22 +218,24 @@ export class PriceService {
         throw new Error('Invalid backend response format');
       }
       
-      // Convert backend coin_id to symbol and map prices
+      // Map prices back to symbols
       for (const item of result.data) {
-        const symbol = ID_TO_SYMBOL_MAP[item.coin_id];
-        if (symbol && symbols.includes(symbol)) {
-          priceMap.set(symbol, item.price_usd);
-          
-          // Cache the price
-          await dbOperations.upsertPrice({
-            id: symbol,
-            symbol: symbol,
-            priceUsd: item.price_usd,
-          });
+        // Find all symbols that map to this coin_id
+        for (const [symbol, coinId] of symbolToCoinId.entries()) {
+          if (coinId === item.coin_id) {
+            priceMap.set(symbol, item.price_usd);
+            
+            // Cache the price
+            await dbOperations.upsertPrice({
+              id: symbol,
+              symbol: symbol,
+              priceUsd: item.price_usd,
+            });
+          }
         }
       }
       
-      console.log(`[priceService] Mapped ${priceMap.size} prices from backend`);
+      console.log(`[priceService] Mapped ${priceMap.size}/${symbols.length} prices from backend`);
       return priceMap;
     } catch (error) {
       console.error(`[priceService] Backend fetch error:`, error);

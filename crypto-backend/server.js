@@ -3,6 +3,7 @@ import cors from 'cors';
 import cron from 'node-cron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import axios from 'axios';
 import { 
   initDatabase, 
   closeDatabase, 
@@ -109,6 +110,75 @@ app.get('/prices', (req, res) => {
       timestamp: Date.now()
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// New endpoint: Batch fetch prices for any coins (on-demand)
+app.post('/prices/batch', async (req, res) => {
+  try {
+    const { coin_ids } = req.body; // Array of CoinGecko IDs
+    
+    if (!coin_ids || !Array.isArray(coin_ids) || coin_ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'coin_ids array is required'
+      });
+    }
+
+    // Limit to 100 coins per request to avoid API abuse
+    if (coin_ids.length > 100) {
+      return res.status(400).json({
+        success: false,
+        error: 'Maximum 100 coins per request'
+      });
+    }
+
+    console.log(`[API] 🔄 Fetching prices for ${coin_ids.length} coins:`, coin_ids.join(', '));
+
+    // Fetch from CoinGecko API
+    const idsParam = coin_ids.join(',');
+    const url = `https://api.coingecko.com/api/v3/simple/price`;
+    
+    const response = await axios.get(url, {
+      params: {
+        ids: idsParam,
+        vs_currencies: 'usd',
+        include_24hr_change: true,
+        include_last_updated_at: true
+      },
+      timeout: 15000 // 15 second timeout
+    });
+
+    const priceData = response.data;
+    const results = [];
+    
+    // Convert to our format
+    for (const coinId of coin_ids) {
+      if (priceData[coinId] && priceData[coinId].usd) {
+        results.push({
+          coin_id: coinId,
+          price_usd: priceData[coinId].usd,
+          change_24h: priceData[coinId].usd_24h_change || null,
+          last_updated: priceData[coinId].last_updated_at || Math.floor(Date.now() / 1000)
+        });
+      }
+    }
+
+    console.log(`[API] ✅ Successfully fetched ${results.length}/${coin_ids.length} prices`);
+
+    res.json({
+      success: true,
+      count: results.length,
+      data: results,
+      timestamp: Date.now()
+    });
+
+  } catch (error) {
+    console.error('[API] ❌ Batch price fetch error:', error.message);
     res.status(500).json({
       success: false,
       error: error.message
