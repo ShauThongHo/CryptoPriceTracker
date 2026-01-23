@@ -28,7 +28,6 @@ const SYMBOL_TO_ID_MAP: Record<string, string> = {
   OPETH: 'ethereum', // OP ETH likely refers to Optimism ETH, map to ETH
   STETH: 'staked-ether',
   WBTC: 'wrapped-bitcoin',
-  MATIC: 'matic-network',
 };
 
 // Reverse mapping: CoinGecko ID to Symbol (for backend responses)
