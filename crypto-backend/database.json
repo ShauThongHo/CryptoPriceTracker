@@ -139,33 +139,103 @@
       "coin_id": "binancecoin",
       "price_usd": 887.28,
       "data_json": "{\"price_usd\":887.28,\"change_24h\":-0.5829860353570824,\"last_updated\":1769168983}"
+    },
+    {
+      "id": 1769169300923.7354,
+      "timestamp": 1769169300,
+      "coin_id": "bitcoin",
+      "price_usd": 89147,
+      "data_json": "{\"price_usd\":89147,\"change_24h\":-0.9121709217600353,\"last_updated\":1769169296}"
+    },
+    {
+      "id": 1769169300924.9968,
+      "timestamp": 1769169300,
+      "coin_id": "ethereum",
+      "price_usd": 2939.53,
+      "data_json": "{\"price_usd\":2939.53,\"change_24h\":-1.4852931214038572,\"last_updated\":1769169296}"
+    },
+    {
+      "id": 1769169300925.8237,
+      "timestamp": 1769169300,
+      "coin_id": "crypto-com-chain",
+      "price_usd": 0.091159,
+      "data_json": "{\"price_usd\":0.091159,\"change_24h\":-1.1370093378846664,\"last_updated\":1769169297}"
+    },
+    {
+      "id": 1769169300957.0945,
+      "timestamp": 1769169300,
+      "coin_id": "solana",
+      "price_usd": 127.43,
+      "data_json": "{\"price_usd\":127.43,\"change_24h\":-1.95019818861881,\"last_updated\":1769169284}"
+    },
+    {
+      "id": 1769169300985.2827,
+      "timestamp": 1769169300,
+      "coin_id": "binancecoin",
+      "price_usd": 887.16,
+      "data_json": "{\"price_usd\":887.16,\"change_24h\":-0.5617042566870902,\"last_updated\":1769169296}"
+    },
+    {
+      "id": 1769169600607.4175,
+      "timestamp": 1769169600,
+      "coin_id": "bitcoin",
+      "price_usd": 89074,
+      "data_json": "{\"price_usd\":89074,\"change_24h\":-0.8458968146887667,\"last_updated\":1769169581}"
+    },
+    {
+      "id": 1769169600608.7185,
+      "timestamp": 1769169600,
+      "coin_id": "ethereum",
+      "price_usd": 2935.9,
+      "data_json": "{\"price_usd\":2935.9,\"change_24h\":-1.4901970423195137,\"last_updated\":1769169583}"
+    },
+    {
+      "id": 1769169600635.1975,
+      "timestamp": 1769169600,
+      "coin_id": "crypto-com-chain",
+      "price_usd": 0.091231,
+      "data_json": "{\"price_usd\":0.091231,\"change_24h\":-0.9971442676119145,\"last_updated\":1769169593}"
+    },
+    {
+      "id": 1769169600648.3828,
+      "timestamp": 1769169600,
+      "coin_id": "solana",
+      "price_usd": 127.39,
+      "data_json": "{\"price_usd\":127.39,\"change_24h\":-1.977493468435401,\"last_updated\":1769169593}"
+    },
+    {
+      "id": 1769169600649.6755,
+      "timestamp": 1769169600,
+      "coin_id": "binancecoin",
+      "price_usd": 885.97,
+      "data_json": "{\"price_usd\":885.97,\"change_24h\":-0.6953105235265736,\"last_updated\":1769169581}"
     }
   ],
   "latest_prices": {
     "bitcoin": {
       "coin_id": "bitcoin",
-      "price_usd": 89141,
-      "last_updated": 1769169001
+      "price_usd": 89074,
+      "last_updated": 1769169600
     },
     "ethereum": {
       "coin_id": "ethereum",
-      "price_usd": 2938.96,
-      "last_updated": 1769169001
+      "price_usd": 2935.9,
+      "last_updated": 1769169600
     },
     "crypto-com-chain": {
       "coin_id": "crypto-com-chain",
-      "price_usd": 0.091196,
-      "last_updated": 1769169001
+      "price_usd": 0.091231,
+      "last_updated": 1769169600
     },
     "solana": {
       "coin_id": "solana",
-      "price_usd": 127.5,
-      "last_updated": 1769169001
+      "price_usd": 127.39,
+      "last_updated": 1769169600
     },
     "binancecoin": {
       "coin_id": "binancecoin",
-      "price_usd": 887.28,
-      "last_updated": 1769169001
+      "price_usd": 885.97,
+      "last_updated": 1769169600
     }
   },
   "wallets": [],
