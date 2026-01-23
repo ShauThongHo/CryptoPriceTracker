@@ -483,70 +483,10 @@ export class PriceService {
    * Save portfolio snapshot after successful price fetch
    */
   private async savePortfolioSnapshot(): Promise<void> {
-    try {
-      const [assets, prices] = await Promise.all([
-        dbOperations.getAllAssets(),
-        dbOperations.getAllPrices(),
-      ]);
-
-      // Group assets by wallet and symbol
-      const walletValues: Record<number, number> = {};
-      const coinData: Record<string, { amount: number; value: number }> = {};
-      let totalValue = 0;
-
-      // Create price lookup map
-      const priceMap = new Map(prices.map(p => [p.symbol, p.priceUsd]));
-
-      for (const asset of assets) {
-        const price = priceMap.get(asset.symbol) || 0;
-        const value = asset.amount * price;
-
-        // Aggregate by wallet
-        walletValues[asset.walletId] = (walletValues[asset.walletId] || 0) + value;
-
-        // Aggregate by coin
-        if (!coinData[asset.symbol]) {
-          coinData[asset.symbol] = { amount: 0, value: 0 };
-        }
-        coinData[asset.symbol].amount += asset.amount;
-        coinData[asset.symbol].value += value;
-
-        totalValue += value;
-      }
-
-      const snapshotData = {
-        wallets: walletValues,
-        coins: coinData,
-      };
-
-      // Save to local database
-      await dbOperations.savePortfolioSnapshot(totalValue, snapshotData);
-
-      // Sync to backend if enabled
-      if (USE_BACKEND && BACKEND_API_BASE) {
-        try {
-          const response = await fetch(`${BACKEND_API_BASE}/portfolio/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              timestamp: Date.now(),
-              totalValue,
-              snapshotData: JSON.stringify(snapshotData)
-            })
-          });
-
-          if (response.ok) {
-            console.log('[priceService] Portfolio snapshot synced to backend');
-          } else {
-            console.warn('[priceService] Failed to sync portfolio snapshot:', response.statusText);
-          }
-        } catch (error) {
-          console.warn('[priceService] Backend sync error (non-critical):', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error saving portfolio snapshot:', error);
-    }
+    // Portfolio snapshots are now calculated and saved by the backend server
+    // Clients only read the data, they don't save snapshots locally
+    console.log('[priceService] Portfolio snapshots are managed by backend server');
+    return;
   }
 
   /**

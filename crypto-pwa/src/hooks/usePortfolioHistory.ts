@@ -1,5 +1,3 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { dbOperations } from '../db/db';
 import { useState, useEffect } from 'react';
 
 type TimeRange = '24h' | '7d' | '30d';
@@ -9,58 +7,58 @@ const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
 
 export function usePortfolioHistory(range: TimeRange) {
   const hours = range === '24h' ? 24 : range === '7d' ? 168 : 720; // 24h, 7d, 30d in hours
-  const [backendHistory, setBackendHistory] = useState<any[]>([]);
-  const [isLoadingBackend, setIsLoadingBackend] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [count, setCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from local database
-  const localHistory = useLiveQuery(async () => {
-    return await dbOperations.getRecentHistory(hours);
-  }, [range]);
-
-  const count = useLiveQuery(async () => {
-    return await dbOperations.getHistoryCount();
-  }, []);
-
-  // Try to load from backend
+  // Load from backend server (centralized calculation)
   useEffect(() => {
     if (!USE_BACKEND || !BACKEND_API_BASE) {
+      console.log('[usePortfolioHistory] Backend disabled, no portfolio history available');
+      setIsLoading(false);
       return;
     }
 
-    setIsLoadingBackend(true);
+    setIsLoading(true);
     
-    fetch(`${BACKEND_API_BASE}/portfolio/history?hours=${hours}`)
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Backend fetch failed');
-        }
-        const result = await response.json();
-        if (result.success && result.data) {
+    // Fetch history data
+    Promise.all([
+      fetch(`${BACKEND_API_BASE}/portfolio/history?hours=${hours}`),
+      fetch(`${BACKEND_API_BASE}/portfolio/history/count`)
+    ])
+      .then(async ([historyResponse, countResponse]) => {
+        const historyResult = await historyResponse.json();
+        const countResult = await countResponse.json();
+        
+        if (historyResult.success && historyResult.data) {
           // Convert backend format to frontend format
-          const converted = result.data.map((item: any) => ({
+          const converted = historyResult.data.map((item: any) => ({
             id: item.id,
             timestamp: new Date(item.timestamp),
             totalValue: item.total_value,
             snapshotData: item.snapshot_data
           }));
-          setBackendHistory(converted);
+          setHistory(converted);
           console.log(`[usePortfolioHistory] Loaded ${converted.length} snapshots from backend`);
+        }
+        
+        if (countResult.success) {
+          setCount(countResult.count);
         }
       })
       .catch((error) => {
-        console.warn('[usePortfolioHistory] Backend load failed, using local:', error);
+        console.error('[usePortfolioHistory] Failed to load from backend:', error);
+        setHistory([]);
+        setCount(0);
       })
       .finally(() => {
-        setIsLoadingBackend(false);
+        setIsLoading(false);
       });
   }, [range, hours]);
 
-  // Use backend data if available and has more data points, otherwise use local
-  const history = backendHistory.length > 0 ? backendHistory : (localHistory || []);
-
   return {
     history,
-    count: count || 0,
-    isLoading: localHistory === undefined || isLoadingBackend,
+    count,
+    isLoading,
   };
 }

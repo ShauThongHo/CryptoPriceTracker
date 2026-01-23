@@ -56,13 +56,108 @@ console.log(`[CRON] 📅 Scheduling price updates every ${FETCH_INTERVAL} minute
 const cronExpression = `*/${FETCH_INTERVAL} * * * *`; // Every N minutes
 cron.schedule(cronExpression, async () => {
   await updatePrices();
+  // Also update portfolio snapshot
+  await calculateAndSavePortfolioSnapshot();
 });
+
+// Calculate and save portfolio snapshot based on current assets and prices
+async function calculateAndSavePortfolioSnapshot() {
+  try {
+    console.log('[PORTFOLIO] 📊 Calculating portfolio snapshot...');
+    
+    // Get all assets and latest prices
+    const assets = getAllAssets();
+    const prices = getLatestPrices();
+    
+    if (assets.length === 0) {
+      console.log('[PORTFOLIO] ⚠️  No assets found, skipping snapshot');
+      return;
+    }
+    
+    // Symbol to CoinGecko ID mapping (same as frontend)
+    const SYMBOL_TO_ID_MAP = {
+      'BTC': 'bitcoin',
+      'ETH': 'ethereum',
+      'WETH': 'ethereum',
+      'USDT': 'tether',
+      'BNB': 'binancecoin',
+      'SOL': 'solana',
+      'USDC': 'usd-coin',
+      'COMP': 'compound-governance-token',
+      'CRO': 'crypto-com-chain',
+      'POL': 'polygon-ecosystem-token',
+      'XPIN': 'xpin-network',
+      'XAUT': 'tether-gold',
+      'USD1': 'usd1-wlfi',
+      'XDAI': 'xdai',
+      'OPETH': 'ethereum',
+      'STETH': 'staked-ether',
+      'WBTC': 'wrapped-bitcoin',
+      'MATIC': 'matic-network',
+    };
+    
+    // Create price lookup map
+    const priceMap = {};
+    for (const priceRow of prices) {
+      priceMap[priceRow.coin_id] = priceRow.price_usd;
+    }
+    
+    // Calculate wallet values and coin data
+    const walletValues = {};
+    const coinData = {};
+    let totalValue = 0;
+    let matchedAssets = 0;
+    
+    for (const asset of assets) {
+      const symbolUpper = asset.symbol.toUpperCase();
+      const coinId = SYMBOL_TO_ID_MAP[symbolUpper] || asset.symbol.toLowerCase();
+      const price = priceMap[coinId] || 0;
+      
+      if (price > 0) {
+        matchedAssets++;
+      }
+      
+      const value = asset.amount * price;
+      
+      // Aggregate by wallet
+      walletValues[asset.wallet_id] = (walletValues[asset.wallet_id] || 0) + value;
+      
+      // Aggregate by coin
+      if (!coinData[asset.symbol]) {
+        coinData[asset.symbol] = { amount: 0, value: 0 };
+      }
+      coinData[asset.symbol].amount += asset.amount;
+      coinData[asset.symbol].value += value;
+      
+      totalValue += value;
+    }
+    
+    // Save snapshot
+    const snapshotData = JSON.stringify({
+      wallets: walletValues,
+      coins: coinData
+    });
+    
+    const success = insertPortfolioSnapshot(Date.now(), totalValue, snapshotData);
+    
+    if (success) {
+      console.log(`[PORTFOLIO] ✅ Snapshot saved: $${totalValue.toFixed(2)} (${matchedAssets}/${assets.length} assets with prices)`);
+    } else {
+      console.log('[PORTFOLIO] ❌ Failed to save snapshot');
+    }
+    
+  } catch (error) {
+    console.error('[PORTFOLIO] ❌ Error calculating snapshot:', error);
+  }
+}
 
 // Fetch prices immediately on startup
 console.log('[STARTUP] 🚀 Fetching initial prices...');
-updatePrices().then(result => {
+updatePrices().then(async result => {
   if (result.success) {
     console.log('[STARTUP] ✅ Initial price fetch complete');
+    // Also calculate initial portfolio snapshot
+    await calculateAndSavePortfolioSnapshot();
   } else {
     console.log('[STARTUP] ⚠️ Initial price fetch failed, will retry at next interval');
   }
@@ -261,30 +356,23 @@ app.get('/portfolio/history', (req, res) => {
 });
 
 app.post('/portfolio/history', (req, res) => {
+  // This endpoint is deprecated - portfolio snapshots are now calculated by server
+  res.status(410).json({
+    success: false,
+    error: 'Portfolio snapshots are now automatically calculated by server',
+    message: 'Use POST /portfolio/snapshot/calculate to manually trigger calculation'
+  });
+});
+
+// New endpoint: Manually trigger portfolio snapshot calculation
+app.post('/portfolio/snapshot/calculate', async (req, res) => {
   try {
-    const { timestamp, totalValue, snapshotData } = req.body;
-    
-    if (!timestamp || totalValue === undefined || !snapshotData) {
-      return res.status(400).json({
-        success: false,
-        error: 'timestamp, totalValue, and snapshotData are required'
-      });
-    }
-    
-    const success = insertPortfolioSnapshot(timestamp, totalValue, snapshotData);
-    
-    if (success) {
-      res.json({
-        success: true,
-        message: 'Portfolio snapshot saved',
-        timestamp: Date.now()
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to save portfolio snapshot'
-      });
-    }
+    await calculateAndSavePortfolioSnapshot();
+    res.json({
+      success: true,
+      message: 'Portfolio snapshot calculated and saved',
+      timestamp: Date.now()
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
