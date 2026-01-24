@@ -43,6 +43,16 @@ export default function PortfolioChart({ walletId }: PortfolioChartProps) {
     };
   });
 
+  // Calculate Y-axis domain (min/max with 5% padding for better visualization)
+  const values = chartData.map(d => d.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const padding = (maxValue - minValue) * 0.05 || maxValue * 0.05 || 1; // 5% padding, or fallback
+  const yAxisDomain = [
+    Math.max(0, minValue - padding), // Don't go below 0
+    maxValue + padding
+  ];
+
   const ranges: { key: TimeRange; label: string }[] = [
     { key: '24h', label: '24H' },
     { key: '7d', label: '7D' },
@@ -128,6 +138,7 @@ export default function PortfolioChart({ walletId }: PortfolioChartProps) {
               style={{ fontSize: '12px' }}
             />
             <YAxis
+              domain={yAxisDomain}
               tick={{ fill: '#9CA3AF' }}
               style={{ fontSize: '12px' }}
               tickFormatter={(value) => `$${formatNumber(value)}`}
