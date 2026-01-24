@@ -802,6 +802,42 @@ app.delete('/api/assets/:id', (req, res) => {
   }
 });
 
+// Get Earn/Staking positions only (filters assets with earnConfig)
+app.get('/api/assets/earn', (req, res) => {
+  try {
+    const allAssets = getAllAssets(); // This triggers interest calculation
+    const earnAssets = allAssets.filter(asset => asset.earnConfig && asset.earnConfig.enabled);
+    
+    // Calculate next payout time for each position
+    const earnPositions = earnAssets.map(asset => {
+      const config = asset.earnConfig;
+      const intervalMs = (config.payoutIntervalHours || 24) * 3600 * 1000;
+      const lastPayout = config.lastPayoutAt || (asset.created_at * 1000);
+      const nextPayoutAt = lastPayout + intervalMs;
+      const timeUntilPayout = Math.max(0, nextPayoutAt - Date.now());
+      
+      return {
+        ...asset,
+        nextPayoutAt,
+        timeUntilPayoutMs: timeUntilPayout,
+        timeUntilPayoutHours: (timeUntilPayout / 3600000).toFixed(2)
+      };
+    });
+    
+    res.json({
+      success: true,
+      count: earnPositions.length,
+      data: earnPositions,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== EXCHANGE API KEY ENDPOINTS ====================
 
 // Save API key
