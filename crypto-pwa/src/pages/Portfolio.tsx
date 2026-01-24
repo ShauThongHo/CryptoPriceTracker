@@ -1,10 +1,9 @@
-import { Wallet, Plus, TrendingUp } from 'lucide-react';
+import { Wallet, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useWallets, useWalletOperations } from '../hooks/useWallets';
 import { useAssets, useAssetOperations } from '../hooks/useAssets';
 import AddWalletModal from '../components/AddWalletModal';
 import AddAssetModal from '../components/AddAssetModal';
-import AddEarnPositionModal from '../components/AddEarnPositionModal';
 import EditAssetModal from '../components/EditAssetModal';
 import WalletCard from '../components/WalletCard';
 import { PortfolioSkeleton } from '../components/LoadingSkeletons';
@@ -20,7 +19,6 @@ export default function Portfolio() {
 
   const [isAddWalletOpen, setIsAddWalletOpen] = useState(false);
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
-  const [isAddEarnOpen, setIsAddEarnOpen] = useState(false);
   const [isEditAssetOpen, setIsEditAssetOpen] = useState(false);
   const [selectedWalletId, setSelectedWalletId] = useState<number | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -86,19 +84,10 @@ export default function Portfolio() {
       {/* Add Wallet Button */}
       <button
         onClick={() => setIsAddWalletOpen(true)}
-        className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-xl p-4 flex items-center justify-center gap-2 font-medium shadow-lg transition-colors mb-3"
+        className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-xl p-4 flex items-center justify-center gap-2 font-medium shadow-lg transition-colors mb-6"
       >
         <Plus className="w-5 h-5" />
         {t('portfolio.addWallet')}
-      </button>
-
-      {/* Add Earn Position Button */}
-      <button
-        onClick={() => setIsAddEarnOpen(true)}
-        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl p-4 flex items-center justify-center gap-2 font-medium shadow-lg transition-all mb-6"
-      >
-        <TrendingUp className="w-5 h-5" />
-        Add Earn Position
       </button>
 
       {/* Loading State */}
@@ -147,17 +136,6 @@ export default function Portfolio() {
         isOpen={isAddAssetOpen}
         onClose={() => {
           setIsAddAssetOpen(false);
-          setSelectedWalletId(null);
-        }}
-        wallets={wallets}
-        onAdd={handleAddAsset}
-        preselectedWalletId={selectedWalletId || undefined}
-      />
-
-      <AddEarnPositionModal
-        isOpen={isAddEarnOpen}
-        onClose={() => {
-          setIsAddEarnOpen(false);
           setSelectedWalletId(null);
         }}
         wallets={wallets}
