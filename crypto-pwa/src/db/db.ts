@@ -9,13 +9,22 @@ export interface Wallet {
   createdAt: Date;
 }
 
+export interface EarnConfig {
+  enabled: boolean;
+  apy: number;
+  interestType: 'compound' | 'simple';
+  payoutIntervalHours: number;
+  lastPayoutAt?: number; // Timestamp in milliseconds
+}
+
 export interface Asset {
   id?: number;
   walletId: number;
   symbol: string;
   amount: number;
-  tags?: string; // e.g., 'Staked', 'Liquid', 'DeFi', 'Trading', 'HODL'
+  tags?: string; // e.g., 'Staked', 'Liquid', 'DeFi', 'Trading', 'HODL', 'earn'
   notes?: string;
+  earnConfig?: EarnConfig; // Optional: For Earn/Staking positions
   createdAt: Date;
   updatedAt: Date;
 }

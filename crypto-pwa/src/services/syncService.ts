@@ -271,6 +271,12 @@ export class SyncService {
     amount: number;
     tags?: string;
     notes?: string;
+    earnConfig?: {
+      enabled: boolean;
+      apy: number;
+      interestType: 'compound' | 'simple';
+      payoutIntervalHours: number;
+    };
   }): Promise<unknown> {
     if (!SYNC_ENABLED) return null;
 
