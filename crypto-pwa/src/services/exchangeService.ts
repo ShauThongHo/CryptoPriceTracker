@@ -133,6 +133,7 @@ class ExchangeService {
 
   /**
    * Fetch balances from an exchange
+   * For OKX: fetches from all account types (funding, trading, financial)
    */
   async fetchBalances(exchangeName: string): Promise<ExchangeBalance[]> {
     try {
@@ -151,28 +152,73 @@ class ExchangeService {
       };
 
       const exchange = await this.initializeExchange(config);
-      const balance = await exchange.fetchBalance();
-
-      // Convert to our format
-      const balances: ExchangeBalance[] = [];
-      const currencies = Object.keys(balance.total);
-
-      for (const currency of currencies) {
-        const total = balance.total[currency];
-        if (total && total > 0) {
-          balances.push({
-            symbol: currency,
-            free: balance.free[currency] || 0,
-            used: balance.used[currency] || 0,
-            total: total,
-          });
+      
+      // OKX has multiple account types: funding, trading, financial (earn)
+      // We need to fetch from all account types and merge them
+      const allBalances: ExchangeBalance[] = [];
+      
+      if (exchangeName.toLowerCase() === 'okx') {
+        // Fetch from all OKX account types
+        const accountTypes = ['funding', 'trading', 'financial']; // financial = earn
+        
+        for (const accountType of accountTypes) {
+          try {
+            console.log(`[OKX] Fetching balance from ${accountType} account...`);
+            const balance = await exchange.fetchBalance({ type: accountType });
+            
+            // Convert to our format and add account type info
+            const currencies = Object.keys(balance.total);
+            for (const currency of currencies) {
+              const total = balance.total[currency];
+              if (total && total > 0) {
+                // Check if we already have this currency from another account type
+                const existingIndex = allBalances.findIndex(b => b.symbol === currency);
+                if (existingIndex >= 0) {
+                  // Merge with existing balance
+                  allBalances[existingIndex].free += balance.free[currency] || 0;
+                  allBalances[existingIndex].used += balance.used[currency] || 0;
+                  allBalances[existingIndex].total += total;
+                } else {
+                  // Add new balance entry
+                  allBalances.push({
+                    symbol: currency,
+                    free: balance.free[currency] || 0,
+                    used: balance.used[currency] || 0,
+                    total: total,
+                  });
+                }
+                console.log(`  ✓ ${currency}: ${total} (in ${accountType})`);
+              }
+            }
+          } catch (accountError) {
+            console.warn(`[OKX] Failed to fetch ${accountType} balance:`, accountError);
+            // Continue with other account types even if one fails
+          }
+        }
+        
+        console.log(`[OKX] Total unique assets found: ${allBalances.length}`);
+      } else {
+        // For other exchanges, use standard fetchBalance
+        const balance = await exchange.fetchBalance();
+        
+        const currencies = Object.keys(balance.total);
+        for (const currency of currencies) {
+          const total = balance.total[currency];
+          if (total && total > 0) {
+            allBalances.push({
+              symbol: currency,
+              free: balance.free[currency] || 0,
+              used: balance.used[currency] || 0,
+              total: total,
+            });
+          }
         }
       }
 
       // Update last used timestamp
       await dbOperations.updateApiKey(apiKeyRecord.id!, {});
 
-      return balances;
+      return allBalances;
     } catch (error) {
       console.error(`Error fetching balances from ${exchangeName}:`, error);
       throw error;
