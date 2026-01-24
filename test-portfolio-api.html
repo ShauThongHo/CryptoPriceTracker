@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio History API 测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1e40af;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+        }
+        .status-ok {
+            background: #10b981;
+            color: white;
+        }
+        .status-fail {
+            background: #ef4444;
+            color: white;
+        }
+        .status-warning {
+            background: #f59e0b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Portfolio History API 测试器</h1>
+        
+        <div class="input-group">
+            <label for="serverUrl">服务器地址:</label>
+            <input type="text" id="serverUrl" value="http://192.168.1.100:3000" 
+                   placeholder="http://your-server-ip:3000">
+        </div>
+
+        <div>
+            <button onclick="testCount()">测试 Count API</button>
+            <button onclick="testHistory()">测试 History API</button>
+            <button onclick="testAll()">运行全部测试</button>
+            <button onclick="triggerSnapshot()">手动触发快照</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function getServerUrl() {
+            return document.getElementById('serverUrl').value.trim();
+        }
+
+        function addResult(type, title, content) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong>\n${content}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testCount() {
+            clearResults();
+            const serverUrl = getServerUrl();
+            
+            addResult('info', '⏳ 测试中...', '正在请求 /portfolio/history/count');
+
+            try {
+                const response = await fetch(`${serverUrl}/portfolio/history/count`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const count = data.count;
+                    const statusClass = count >= 2 ? 'status-ok' : 'status-warning';
+                    const statusText = count >= 2 ? '✅ 足够' : '⚠️ 不足';
+                    
+                    addResult('success', '✅ Count API 成功', 
+                        `Total Count: ${count}\n` +
+                        `状态: <span class="${statusClass}">${statusText}</span>\n\n` +
+                        `完整响应:\n${JSON.stringify(data, null, 2)}`
+                    );
+
+                    if (count < 2) {
+                        addResult('warning', '⚠️ 快照数量不足', 
+                            `需要至少2个快照才能显示图表\n` +
+                            `当前: ${count}\n` +
+                            `缺少: ${2 - count}\n\n` +
+                            `建议: 点击"手动触发快照"按钮或等待5分钟`
+                        );
+                    }
+                } else {
+                    addResult('error', '❌ API 返回错误', JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                addResult('error', '❌ 请求失败', `错误: ${error.message}\n\n请检查:\n1. 服务器地址是否正确\n2. 服务器是否运行\n3. 网络连接是否正常`);
+            }
+        }
+
+        async function testHistory() {
+            clearResults();
+            const serverUrl = getServerUrl();
+            
+            addResult('info', '⏳ 测试中...', '正在请求 /portfolio/history?hours=24');
+
+            try {
+                const response = await fetch(`${serverUrl}/portfolio/history?hours=24`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const hasTotalCount = 'totalCount' in data;
+                    const totalCount = data.totalCount || 0;
+                    const count = data.count || 0;
+                    const dataPoints = data.data ? data.data.length : 0;
+
+                    let statusHTML = '';
+                    statusHTML += `<span class="status-badge ${hasTotalCount ? 'status-ok' : 'status-fail'}">`;
+                    statusHTML += hasTotalCount ? '✅ totalCount存在' : '❌ totalCount缺失';
+                    statusHTML += '</span>';
+                    
+                    statusHTML += `<span class="status-badge ${totalCount >= 2 ? 'status-ok' : 'status-warning'}">`;
+                    statusHTML += totalCount >= 2 ? '✅ 数据充足' : '⚠️ 数据不足';
+                    statusHTML += '</span>';
+
+                    addResult('success', '✅ History API 成功', 
+                        `${statusHTML}\n\n` +
+                        `📊 统计信息:\n` +
+                        `  • Count (24h范围): ${count}\n` +
+                        `  • TotalCount (数据库): ${totalCount}\n` +
+                        `  • Data points: ${dataPoints}\n\n` +
+                        `完整响应:\n${JSON.stringify(data, null, 2)}`
+                    );
+
+                    if (!hasTotalCount) {
+                        addResult('error', '❌ 关键字段缺失', 
+                            `API响应中没有 totalCount 字段！\n\n` +
+                            `这会导致前端无法判断是否显示图表。\n\n` +
+                            `解决方案:\n` +
+                            `1. 确保后端代码已更新 (git pull)\n` +
+                            `2. 重启服务器 (pm2 restart crypto-backend)`
+                        );
+                    } else if (totalCount < 2) {
+                        addResult('warning', '⚠️ 快照数量不足', 
+                            `totalCount: ${totalCount} (需要 >= 2)\n\n` +
+                            `建议: 点击"手动触发快照"按钮`
+                        );
+                    } else {
+                        addResult('success', '✅ 一切正常!', 
+                            `后端API工作正常，totalCount = ${totalCount}\n\n` +
+                            `如果前端图表还不显示，请:\n` +
+                            `1. 打开浏览器开发者工具 (F12)\n` +
+                            `2. 查看 Console 标签\n` +
+                            `3. 查找包含 [usePortfolioHistory] 和 [PortfolioChart] 的日志\n` +
+                            `4. 检查 totalCount 是否正确传递`
+                        );
+                    }
+
+                    // 显示最近的快照
+                    if (data.data && data.data.length > 0) {
+                        const snapshots = data.data.slice(0, 3).map(s => {
+                            const date = new Date(s.timestamp);
+                            return `  📊 ${date.toLocaleString()} - $${s.total_value.toFixed(2)}`;
+                        }).join('\n');
+                        
+                        addResult('info', '📈 最近的快照', snapshots);
+                    }
+                } else {
+                    addResult('error', '❌ API 返回错误', JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                addResult('error', '❌ 请求失败', `错误: ${error.message}\n\n请检查:\n1. 服务器地址是否正确\n2. 服务器是否运行\n3. 网络连接是否正常`);
+            }
+        }
+
+        async function triggerSnapshot() {
+            const serverUrl = getServerUrl();
+            
+            addResult('info', '⏳ 触发中...', '正在手动触发快照计算...');
+
+            try {
+                const response = await fetch(`${serverUrl}/portfolio/snapshot/calculate`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    addResult('success', '✅ 快照触发成功', 
+                        `${data.message}\n\n` +
+                        `建议: 等待2秒后再次测试 Count API`
+                    );
+                    
+                    setTimeout(() => {
+                        testCount();
+                    }, 2000);
+                } else {
+                    addResult('error', '❌ 触发失败', JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                addResult('error', '❌ 请求失败', `错误: ${error.message}`);
+            }
+        }
+
+        async function testAll() {
+            clearResults();
+            addResult('info', '🚀 开始全面测试', '按顺序执行所有测试...\n');
+            
+            await testCount();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testHistory();
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('info', '💡 提示', 
+                    '点击上方按钮开始测试\n\n' +
+                    '确保服务器地址正确（通常是手机IP:3000）'
+                );
+            }, 500);
+        });
+    </script>
+</body>
+</html>
