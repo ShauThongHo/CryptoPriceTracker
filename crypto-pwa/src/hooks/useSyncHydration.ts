@@ -35,23 +35,48 @@ export function useSyncHydration() {
       return;
     }
 
-    setSyncStatus((prev) => ({ ...prev, isSyncing: true, error: null }));
+    // Check if local DB has data
+    const localWalletCount = await db.wallets.count();
+    const localAssetCount = await db.assets.count();
+    const hasLocalData = localWalletCount > 0 || localAssetCount > 0;
+
+    if (hasLocalData) {
+      console.log('[SyncHydration] 📦 Local data found, loading immediately...');
+      // Show local data first, sync in background
+      setSyncStatus({
+        isInitialSync: false,
+        isSyncing: true, // Background sync
+        lastSyncTime: null,
+        error: null,
+        isOnline: false,
+      });
+    } else {
+      setSyncStatus((prev) => ({ ...prev, isSyncing: true, error: null }));
+    }
+
+    // Maximum total timeout (connection test + sync)
+    const MAX_TOTAL_TIMEOUT = 60000; // 60 seconds for slow networks
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Sync timeout - using local data')), MAX_TOTAL_TIMEOUT);
+    });
 
     try {
-      // Test connection first
-      const isOnline = await syncService.testConnection();
-      setSyncStatus((prev) => ({ ...prev, isOnline }));
+      await Promise.race([
+        (async () => {
+          // Test connection first
+          const isOnline = await syncService.testConnection();
+          setSyncStatus((prev) => ({ ...prev, isOnline }));
 
-      if (!isOnline) {
-        console.warn('[SyncHydration] Backend offline, using local cache');
-        setSyncStatus((prev) => ({
-          ...prev,
-          isInitialSync: false,
-          isSyncing: false,
-          error: 'Backend offline - using local data',
-        }));
-        return;
-      }
+          if (!isOnline) {
+            console.warn('[SyncHydration] Backend offline, using local cache');
+            setSyncStatus((prev) => ({
+              ...prev,
+              isInitialSync: false,
+              isSyncing: false,
+              error: 'Backend offline - using local data',
+            }));
+            return;
+          }
 
       // Fetch server state
       const result = await syncService.fetchServerState();
@@ -104,6 +129,9 @@ export function useSyncHydration() {
         error: null,
         isOnline: true,
       });
+        })(),
+        timeoutPromise
+      ]);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[SyncHydration] Hydration failed:', errorMessage);

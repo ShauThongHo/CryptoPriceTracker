@@ -1,7 +1,7 @@
 // Backend API Configuration
 const BACKEND_API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 const SYNC_ENABLED = import.meta.env.VITE_SYNC_ENABLED !== 'false'; // Default true
-const SYNC_TIMEOUT = 10000; // 10 seconds
+const SYNC_TIMEOUT = 60000; // 60 seconds (for tunnel/high-latency networks)
 
 export interface SyncState {
   wallets: Array<{
@@ -66,7 +66,7 @@ export class SyncService {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(`${BACKEND_API_BASE}/health`, {
         signal: controller.signal,

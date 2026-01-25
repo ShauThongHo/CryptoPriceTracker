@@ -14,7 +14,7 @@ export function usePortfolioHistory(range: TimeRange) {
 
   // Load from backend server (centralized calculation)
   useEffect(() => {
-    if (!USE_BACKEND || !BACKEND_API_BASE) {
+    if (!USE_BACKEND) {
       console.log('[usePortfolioHistory] Backend disabled, no portfolio history available');
       setIsLoading(false);
       return;
