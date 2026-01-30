@@ -356,6 +356,32 @@ app.post('/prices/batch', async (req, res) => {
   }
 });
 
+// Manual price update trigger
+app.post('/prices/update', async (req, res) => {
+  try {
+    console.log('[API] 🔄 Manual price update triggered');
+    const result = await updatePrices();
+    
+    // Also update portfolio snapshot after price update
+    await calculateAndSavePortfolioSnapshot();
+    
+    res.json({
+      success: result.success,
+      message: result.success 
+        ? `Updated ${result.updated} prices, failed ${result.failed}`
+        : 'Price update failed',
+      data: result,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error('[API] ❌ Manual price update error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.get('/history/:coin', (req, res) => {
   try {
     const { coin } = req.params;
@@ -1150,6 +1176,25 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`⏰ Auto-fetch: Every ${FETCH_INTERVAL} minutes`);
   console.log('Press Ctrl+C to stop');
   console.log('');
+  
+  // Perform initial price update on server start
+  console.log('[STARTUP] 🔄 Performing initial price update...');
+  updatePrices()
+    .then(result => {
+      if (result.success) {
+        console.log(`[STARTUP] ✅ Initial price update successful: ${result.updated} prices updated`);
+        // Also calculate initial portfolio snapshot
+        return calculateAndSavePortfolioSnapshot();
+      } else {
+        console.log(`[STARTUP] ⚠️ Initial price update failed: ${result.error}`);
+      }
+    })
+    .then(() => {
+      console.log('[STARTUP] 📊 Initial portfolio snapshot saved');
+    })
+    .catch(err => {
+      console.error('[STARTUP] ❌ Error during initial update:', err);
+    });
 });
 
 // Graceful shutdown
