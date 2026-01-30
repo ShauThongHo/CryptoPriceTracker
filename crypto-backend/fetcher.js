@@ -1,37 +1,27 @@
 import axios from 'axios';
-import { insertPriceHistory, upsertLatestPrice, getAllAssets } from './db.js';
+import { insertPriceHistory, upsertLatestPrice, getAllAssets, getAllTrackedCoinIds } from './db.js';
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-// Coins to track (CoinGecko IDs) - expanded list
-const TRACKED_COINS = [
-  'bitcoin',
-  'ethereum',
-  'crypto-com-chain',
-  'solana',
-  'binancecoin',
-  'tether',
-  'usd-coin',
-  'compound-governance-token',
-  'polygon-ecosystem-token',
-  'xpin-network',
-  'tether-gold',
-  'usd1-wlfi',
-  'xdai',
-  'staked-ether',
-  'wrapped-bitcoin',
-  'matic-network'
-];
-
 /**
  * Fetch current prices from CoinGecko API
+ * Now uses dynamic coin list from database
  */
 async function fetchPricesFromCoinGecko() {
   try {
+    // Get dynamic list of coins to track
+    const TRACKED_COINS = getAllTrackedCoinIds();
+    
+    if (TRACKED_COINS.length === 0) {
+      console.log('[FETCHER] ⚠️  No coins to track');
+      return {};
+    }
+    
     const coinIds = TRACKED_COINS.join(',');
     const url = `${COINGECKO_API_BASE}/simple/price`;
     
-    console.log(`[FETCHER] 🔄 Fetching prices from CoinGecko...`);
+    console.log(`[FETCHER] 🔄 Fetching prices for ${TRACKED_COINS.length} coins from CoinGecko...`);
+    console.log(`[FETCHER] 📋 Tracking: ${TRACKED_COINS.slice(0, 5).join(', ')}${TRACKED_COINS.length > 5 ? '...' : ''}`);
     
     const response = await axios.get(url, {
       params: {
@@ -64,6 +54,9 @@ async function fetchPricesFromCoinGecko() {
 function updateDatabase(priceData) {
   let successCount = 0;
   let failCount = 0;
+  
+  // Get dynamic list of coins to track
+  const TRACKED_COINS = getAllTrackedCoinIds();
   
   for (const coinId of TRACKED_COINS) {
     const coinData = priceData[coinId];
@@ -131,38 +124,6 @@ export async function updatePrices() {
     console.error('[FETCHER] ❌ Unexpected error during update:', error);
     return { success: false, error: error.message };
   }
-}
-
-/**
- * Get list of tracked coins
- */
-export function getTrackedCoins() {
-  return [...TRACKED_COINS];
-}
-
-/**
- * Add a coin to tracking list
- */
-export function addTrackedCoin(coinId) {
-  if (!TRACKED_COINS.includes(coinId)) {
-    TRACKED_COINS.push(coinId);
-    console.log(`[FETCHER] ➕ Added ${coinId} to tracking list`);
-    return true;
-  }
-  return false;
-}
-
-/**
- * Remove a coin from tracking list
- */
-export function removeTrackedCoin(coinId) {
-  const index = TRACKED_COINS.indexOf(coinId);
-  if (index > -1) {
-    TRACKED_COINS.splice(index, 1);
-    console.log(`[FETCHER] ➖ Removed ${coinId} from tracking list`);
-    return true;
-  }
-  return false;
 }
 
 // ==================== EARN INTEREST CALCULATOR ====================

@@ -617,6 +617,52 @@ export function deleteCustomCoin(id) {
   }
 }
 
+/**
+ * Get all unique coin IDs that need price tracking
+ * Combines assets symbols + custom coins + predefined list
+ */
+export function getAllTrackedCoinIds() {
+  const coinIds = new Set();
+  
+  // Predefined coins (always track these)
+  const PREDEFINED = [
+    'bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana',
+    'usd-coin', 'crypto-com-chain', 'compound-governance-token',
+    'polygon-ecosystem-token', 'xpin-network', 'tether-gold',
+    'usd1-wlfi', 'xdai', 'staked-ether', 'wrapped-bitcoin', 'matic-network'
+  ];
+  PREDEFINED.forEach(id => coinIds.add(id));
+  
+  // Symbol to CoinGecko ID mapping
+  const SYMBOL_TO_ID = {
+    'BTC': 'bitcoin', 'ETH': 'ethereum', 'WETH': 'ethereum',
+    'USDT': 'tether', 'BNB': 'binancecoin', 'SOL': 'solana',
+    'USDC': 'usd-coin', 'COMP': 'compound-governance-token',
+    'CRO': 'crypto-com-chain', 'POL': 'polygon-ecosystem-token',
+    'XPIN': 'xpin-network', 'XAUT': 'tether-gold', 'USD1': 'usd1-wlfi',
+    'XDAI': 'xdai', 'OPETH': 'ethereum', 'STETH': 'staked-ether',
+    'WBTC': 'wrapped-bitcoin', 'MATIC': 'matic-network'
+  };
+  
+  // Add coins from user assets
+  const assets = db.data.assets || [];
+  assets.forEach(asset => {
+    const symbol = asset.symbol.toUpperCase();
+    const coinId = SYMBOL_TO_ID[symbol] || symbol.toLowerCase();
+    coinIds.add(coinId);
+  });
+  
+  // Add custom coins
+  const customCoins = db.data.custom_coins || [];
+  customCoins.forEach(coin => {
+    if (coin.coin_gecko_id) {
+      coinIds.add(coin.coin_gecko_id);
+    }
+  });
+  
+  return Array.from(coinIds);
+}
+
 // ==================== API KEY OPERATIONS ====================
 
 /**
