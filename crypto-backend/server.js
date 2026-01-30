@@ -529,7 +529,7 @@ app.get('/api/sync', (req, res) => {
 // Replace full sync state (overwrites all wallets and assets)
 app.post('/api/sync', (req, res) => {
   try {
-    const { wallets, assets } = req.body;
+    const { wallets, assets, customCoins } = req.body;
     
     if (!wallets || !assets) {
       return res.status(400).json({
@@ -538,11 +538,11 @@ app.post('/api/sync', (req, res) => {
       });
     }
     
-    replaceFullSyncState({ wallets, assets });
+    replaceFullSyncState({ wallets, assets, customCoins: customCoins || [] });
     
     res.json({
       success: true,
-      message: `Synced ${wallets.length} wallets and ${assets.length} assets`,
+      message: `Synced ${wallets.length} wallets, ${assets.length} assets, and ${customCoins?.length || 0} custom coins`,
       timestamp: Date.now()
     });
   } catch (error) {
