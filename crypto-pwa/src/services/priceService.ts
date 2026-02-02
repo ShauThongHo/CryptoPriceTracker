@@ -197,6 +197,7 @@ export class PriceService {
       
       const url = `${BACKEND_API_BASE}/prices/batch`;
       console.log(`[priceService] Fetching ${symbols.length} coins from backend:`, url);
+      console.log(`[priceService] BACKEND_API_BASE:`, BACKEND_API_BASE);
       console.log(`[priceService] Symbols:`, symbols);
       console.log(`[priceService] CoinGecko IDs:`, coinIds);
       
@@ -206,8 +207,12 @@ export class PriceService {
         body: JSON.stringify({ coin_ids: coinIds })
       });
       
+      console.log(`[priceService] Response status:`, response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Backend error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`[priceService] Backend error response:`, errorText);
+        throw new Error(`Backend error! status: ${response.status}, body: ${errorText}`);
       }
       
       const result: BackendPriceResponse = await response.json();
@@ -238,6 +243,12 @@ export class PriceService {
       return priceMap;
     } catch (error) {
       console.error(`[priceService] Backend fetch error:`, error);
+      console.error(`[priceService] Error details:`, {
+        message: error instanceof Error ? error.message : String(error),
+        url: `${BACKEND_API_BASE}/prices/batch`,
+        USE_BACKEND,
+        FALLBACK_TO_COINGECKO
+      });
       return priceMap;
     }
   }

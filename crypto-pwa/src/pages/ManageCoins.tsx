@@ -2,6 +2,7 @@ import { Plus, Edit2, Trash2, Coins, ArrowLeft, CheckCircle2 } from 'lucide-reac
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCustomCoins } from '../hooks/useCustomCoins';
+import { useSyncHydration } from '../hooks/useSyncHydration';
 import type { CustomCoin } from '../db/db';
 
 // Pre-defined coins from priceService (synced with SYMBOL_TO_ID_MAP)
@@ -24,6 +25,7 @@ const PREDEFINED_COINS = [
 export default function ManageCoins() {
   const navigate = useNavigate();
   const { customCoins, addCustomCoin, updateCustomCoin, deleteCustomCoin } = useCustomCoins();
+  const { pushToServer } = useSyncHydration();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoin, setEditingCoin] = useState<CustomCoin | null>(null);
   const [activeTab, setActiveTab] = useState<'predefined' | 'custom'>('predefined');
@@ -66,6 +68,9 @@ export default function ManageCoins() {
       });
     }
     
+    // Sync to backend immediately
+    await pushToServer();
+    
     setIsModalOpen(false);
     setFormData({ symbol: '', name: '', coinGeckoId: '' });
   };
@@ -73,6 +78,8 @@ export default function ManageCoins() {
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this coin?')) {
       await deleteCustomCoin(id);
+      // Sync to backend immediately
+      await pushToServer();
     }
   };
 

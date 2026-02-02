@@ -112,13 +112,14 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.coingecko\.com\/.*/i,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'coingecko-api-cache',
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 5 * 60, // 5 minutes
               },
+              networkTimeoutSeconds: 10,
             },
           },
           {

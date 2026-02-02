@@ -27,6 +27,17 @@ export interface SyncState {
     updated_at: number;
     updatedAt?: Date;
   }>;
+  customCoins?: Array<{
+    id: number;
+    symbol: string;
+    name: string;
+    coin_gecko_id?: string;
+    coinGeckoId?: string;
+    is_custom?: boolean;
+    isCustom?: boolean;
+    created_at: number;
+    createdAt?: Date;
+  }>;
   timestamp: number;
 }
 
@@ -137,7 +148,7 @@ export class SyncService {
   /**
    * Push local state to backend (overwrites server data)
    */
-  async pushLocalState(wallets: unknown[], assets: unknown[]): Promise<SyncResult> {
+  async pushLocalState(wallets: unknown[], assets: unknown[], customCoins: unknown[]): Promise<SyncResult> {
     if (!SYNC_ENABLED) {
       return { success: false, error: 'Sync is disabled' };
     }
@@ -150,7 +161,7 @@ export class SyncService {
     }
 
     try {
-      console.log(`[SyncService] Pushing ${wallets.length} wallets, ${assets.length} assets...`);
+      console.log(`[SyncService] Pushing ${wallets.length} wallets, ${assets.length} assets, ${customCoins.length} custom coins...`);
 
       // Convert frontend format to backend format
       const backendWallets = wallets.map((w: any) => ({
@@ -173,6 +184,15 @@ export class SyncService {
         updated_at: a.updatedAt ? Math.floor(a.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       }));
 
+      const backendCustomCoins = customCoins.map((c: any) => ({
+        id: c.id,
+        symbol: c.symbol,
+        name: c.name,
+        coin_gecko_id: c.coinGeckoId,
+        is_custom: c.isCustom !== undefined ? c.isCustom : true,
+        created_at: c.createdAt ? Math.floor(c.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
+      }));
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), SYNC_TIMEOUT);
 
@@ -184,6 +204,7 @@ export class SyncService {
         body: JSON.stringify({
           wallets: backendWallets,
           assets: backendAssets,
+          customCoins: backendCustomCoins,
         }),
         signal: controller.signal,
       });

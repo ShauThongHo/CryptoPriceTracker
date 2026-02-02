@@ -92,6 +92,7 @@ export function useSyncHydration() {
       // Clear local database
       await db.wallets.clear();
       await db.assets.clear();
+      await db.customCoins.clear();
 
       // Hydrate wallets
       for (const wallet of result.data.wallets) {
@@ -118,8 +119,20 @@ export function useSyncHydration() {
         });
       }
 
+      // Hydrate custom coins
+      for (const coin of result.data.customCoins || []) {
+        await db.customCoins.add({
+          id: coin.id,
+          symbol: coin.symbol,
+          name: coin.name,
+          coinGeckoId: coin.coin_gecko_id || coin.coinGeckoId || '',
+          isCustom: coin.is_custom !== undefined ? coin.is_custom : true,
+          createdAt: new Date(coin.created_at * 1000),
+        });
+      }
+
       console.log(
-        `[SyncHydration] Hydration complete: ${result.data.wallets.length} wallets, ${result.data.assets.length} assets`
+        `[SyncHydration] Hydration complete: ${result.data.wallets.length} wallets, ${result.data.assets.length} assets, ${result.data.customCoins?.length || 0} custom coins`
       );
 
       setSyncStatus({
@@ -159,8 +172,9 @@ export function useSyncHydration() {
     try {
       const wallets = await dbOperations.getWallets();
       const assets = await dbOperations.getAllAssets();
+      const customCoins = await db.customCoins.toArray();
 
-      const result = await syncService.pushLocalState(wallets, assets);
+      const result = await syncService.pushLocalState(wallets, assets, customCoins);
 
       setSyncStatus((prev) => ({
         ...prev,
