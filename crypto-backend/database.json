@@ -335,88 +335,312 @@
       "coin_id": "dai",
       "price_usd": 0.999654,
       "data_json": "{\"price_usd\":0.999654,\"change_24h\":0.003528779533200156,\"last_updated\":1770229190}"
+    },
+    {
+      "id": 1770229466154.2346,
+      "timestamp": 1770229466,
+      "coin_id": "bitcoin",
+      "price_usd": 72746,
+      "data_json": "{\"price_usd\":72746,\"change_24h\":-2.0811575409556964,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466155.0146,
+      "timestamp": 1770229466,
+      "coin_id": "ethereum",
+      "price_usd": 2086.46,
+      "data_json": "{\"price_usd\":2086.46,\"change_24h\":-2.4827887287639983,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466175.991,
+      "timestamp": 1770229466,
+      "coin_id": "tether",
+      "price_usd": 0.998103,
+      "data_json": "{\"price_usd\":0.998103,\"change_24h\":-0.0803496272796726,\"last_updated\":1770229462}"
+    },
+    {
+      "id": 1770229466193.895,
+      "timestamp": 1770229466,
+      "coin_id": "binancecoin",
+      "price_usd": 708.35,
+      "data_json": "{\"price_usd\":708.35,\"change_24h\":-4.586768337258429,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466211.7415,
+      "timestamp": 1770229466,
+      "coin_id": "solana",
+      "price_usd": 90.65,
+      "data_json": "{\"price_usd\":90.65,\"change_24h\":-7.892642536858991,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466229.92,
+      "timestamp": 1770229466,
+      "coin_id": "usd-coin",
+      "price_usd": 0.9996,
+      "data_json": "{\"price_usd\":0.9996,\"change_24h\":-0.010064208632171558,\"last_updated\":1770229460}"
+    },
+    {
+      "id": 1770229466248.296,
+      "timestamp": 1770229466,
+      "coin_id": "crypto-com-chain",
+      "price_usd": 0.079316,
+      "data_json": "{\"price_usd\":0.079316,\"change_24h\":-2.4540794198613747,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466268.5444,
+      "timestamp": 1770229466,
+      "coin_id": "compound-governance-token",
+      "price_usd": 19.1,
+      "data_json": "{\"price_usd\":19.1,\"change_24h\":-1.1591673287827218,\"last_updated\":1770229468}"
+    },
+    {
+      "id": 1770229466287.622,
+      "timestamp": 1770229466,
+      "coin_id": "polygon-ecosystem-token",
+      "price_usd": 0.105928,
+      "data_json": "{\"price_usd\":0.105928,\"change_24h\":-0.8944370743414426,\"last_updated\":1770229467}"
+    },
+    {
+      "id": 1770229466306.6855,
+      "timestamp": 1770229466,
+      "coin_id": "xpin-network",
+      "price_usd": 0.00213291,
+      "data_json": "{\"price_usd\":0.00213291,\"change_24h\":1.8415985820341394,\"last_updated\":1770229461}"
+    },
+    {
+      "id": 1770229466327.8806,
+      "timestamp": 1770229466,
+      "coin_id": "tether-gold",
+      "price_usd": 4889.36,
+      "data_json": "{\"price_usd\":4889.36,\"change_24h\":-0.7283631464339549,\"last_updated\":1770229468}"
+    },
+    {
+      "id": 1770229466346.9268,
+      "timestamp": 1770229466,
+      "coin_id": "usd1-wlfi",
+      "price_usd": 0.999121,
+      "data_json": "{\"price_usd\":0.999121,\"change_24h\":-0.012291112163144319,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466366.3667,
+      "timestamp": 1770229466,
+      "coin_id": "xdai",
+      "price_usd": 0.999673,
+      "data_json": "{\"price_usd\":0.999673,\"change_24h\":-0.021421040510205894,\"last_updated\":1770229461}"
+    },
+    {
+      "id": 1770229466386.757,
+      "timestamp": 1770229466,
+      "coin_id": "staked-ether",
+      "price_usd": 2081.4,
+      "data_json": "{\"price_usd\":2081.4,\"change_24h\":-3.4571060681950927,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466407.89,
+      "timestamp": 1770229466,
+      "coin_id": "wrapped-bitcoin",
+      "price_usd": 72407,
+      "data_json": "{\"price_usd\":72407,\"change_24h\":-2.3393728477357962,\"last_updated\":1770229469}"
+    },
+    {
+      "id": 1770229466426.067,
+      "timestamp": 1770229466,
+      "coin_id": "dai",
+      "price_usd": 0.999184,
+      "data_json": "{\"price_usd\":0.999184,\"change_24h\":0.022007426363001625,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466456.0745,
+      "timestamp": 1770229466,
+      "coin_id": "bitcoin",
+      "price_usd": 72746,
+      "data_json": "{\"price_usd\":72746,\"change_24h\":-2.0811575409556964,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466477.5627,
+      "timestamp": 1770229466,
+      "coin_id": "ethereum",
+      "price_usd": 2086.46,
+      "data_json": "{\"price_usd\":2086.46,\"change_24h\":-2.4827887287639983,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466499.501,
+      "timestamp": 1770229466,
+      "coin_id": "tether",
+      "price_usd": 0.998103,
+      "data_json": "{\"price_usd\":0.998103,\"change_24h\":-0.0803496272796726,\"last_updated\":1770229462}"
+    },
+    {
+      "id": 1770229466518.6213,
+      "timestamp": 1770229466,
+      "coin_id": "binancecoin",
+      "price_usd": 708.35,
+      "data_json": "{\"price_usd\":708.35,\"change_24h\":-4.586768337258429,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466537.7952,
+      "timestamp": 1770229466,
+      "coin_id": "solana",
+      "price_usd": 90.65,
+      "data_json": "{\"price_usd\":90.65,\"change_24h\":-7.892642536858991,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466557.8877,
+      "timestamp": 1770229466,
+      "coin_id": "usd-coin",
+      "price_usd": 0.9996,
+      "data_json": "{\"price_usd\":0.9996,\"change_24h\":-0.010064208632171558,\"last_updated\":1770229460}"
+    },
+    {
+      "id": 1770229466577.7925,
+      "timestamp": 1770229466,
+      "coin_id": "crypto-com-chain",
+      "price_usd": 0.079316,
+      "data_json": "{\"price_usd\":0.079316,\"change_24h\":-2.4540794198613747,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466596.6797,
+      "timestamp": 1770229466,
+      "coin_id": "compound-governance-token",
+      "price_usd": 19.1,
+      "data_json": "{\"price_usd\":19.1,\"change_24h\":-1.1591673287827218,\"last_updated\":1770229468}"
+    },
+    {
+      "id": 1770229466616.3523,
+      "timestamp": 1770229466,
+      "coin_id": "polygon-ecosystem-token",
+      "price_usd": 0.105928,
+      "data_json": "{\"price_usd\":0.105928,\"change_24h\":-0.8944370743414426,\"last_updated\":1770229467}"
+    },
+    {
+      "id": 1770229466634.866,
+      "timestamp": 1770229466,
+      "coin_id": "xpin-network",
+      "price_usd": 0.00213291,
+      "data_json": "{\"price_usd\":0.00213291,\"change_24h\":1.8415985820341394,\"last_updated\":1770229461}"
+    },
+    {
+      "id": 1770229466655.2378,
+      "timestamp": 1770229466,
+      "coin_id": "tether-gold",
+      "price_usd": 4889.36,
+      "data_json": "{\"price_usd\":4889.36,\"change_24h\":-0.7283631464339549,\"last_updated\":1770229468}"
+    },
+    {
+      "id": 1770229466674.6406,
+      "timestamp": 1770229466,
+      "coin_id": "usd1-wlfi",
+      "price_usd": 0.999121,
+      "data_json": "{\"price_usd\":0.999121,\"change_24h\":-0.012291112163144319,\"last_updated\":1770229465}"
+    },
+    {
+      "id": 1770229466693.9565,
+      "timestamp": 1770229466,
+      "coin_id": "xdai",
+      "price_usd": 0.999673,
+      "data_json": "{\"price_usd\":0.999673,\"change_24h\":-0.021421040510205894,\"last_updated\":1770229461}"
+    },
+    {
+      "id": 1770229466712.352,
+      "timestamp": 1770229466,
+      "coin_id": "staked-ether",
+      "price_usd": 2081.4,
+      "data_json": "{\"price_usd\":2081.4,\"change_24h\":-3.4571060681950927,\"last_updated\":1770229464}"
+    },
+    {
+      "id": 1770229466731.475,
+      "timestamp": 1770229466,
+      "coin_id": "wrapped-bitcoin",
+      "price_usd": 72407,
+      "data_json": "{\"price_usd\":72407,\"change_24h\":-2.3393728477357962,\"last_updated\":1770229469}"
+    },
+    {
+      "id": 1770229466752.9543,
+      "timestamp": 1770229466,
+      "coin_id": "dai",
+      "price_usd": 0.999184,
+      "data_json": "{\"price_usd\":0.999184,\"change_24h\":0.022007426363001625,\"last_updated\":1770229464}"
     }
   ],
   "latest_prices": {
     "bitcoin": {
       "coin_id": "bitcoin",
-      "price_usd": 72835,
-      "last_updated": 1770229200
+      "price_usd": 72746,
+      "last_updated": 1770229466
     },
     "ethereum": {
       "coin_id": "ethereum",
-      "price_usd": 2086.91,
-      "last_updated": 1770229200
+      "price_usd": 2086.46,
+      "last_updated": 1770229466
     },
     "tether": {
       "coin_id": "tether",
-      "price_usd": 0.997922,
-      "last_updated": 1770229201
+      "price_usd": 0.998103,
+      "last_updated": 1770229466
     },
     "binancecoin": {
       "coin_id": "binancecoin",
-      "price_usd": 708.64,
-      "last_updated": 1770229201
+      "price_usd": 708.35,
+      "last_updated": 1770229466
     },
     "solana": {
       "coin_id": "solana",
-      "price_usd": 90.72,
-      "last_updated": 1770229201
+      "price_usd": 90.65,
+      "last_updated": 1770229466
     },
     "usd-coin": {
       "coin_id": "usd-coin",
-      "price_usd": 0.999601,
-      "last_updated": 1770229201
+      "price_usd": 0.9996,
+      "last_updated": 1770229466
     },
     "crypto-com-chain": {
       "coin_id": "crypto-com-chain",
-      "price_usd": 0.07936,
-      "last_updated": 1770229201
+      "price_usd": 0.079316,
+      "last_updated": 1770229466
     },
     "compound-governance-token": {
       "coin_id": "compound-governance-token",
-      "price_usd": 19.11,
-      "last_updated": 1770229201
+      "price_usd": 19.1,
+      "last_updated": 1770229466
     },
     "polygon-ecosystem-token": {
       "coin_id": "polygon-ecosystem-token",
-      "price_usd": 0.106146,
-      "last_updated": 1770229201
+      "price_usd": 0.105928,
+      "last_updated": 1770229466
     },
     "xpin-network": {
       "coin_id": "xpin-network",
-      "price_usd": 0.00213,
-      "last_updated": 1770229201
+      "price_usd": 0.00213291,
+      "last_updated": 1770229466
     },
     "tether-gold": {
       "coin_id": "tether-gold",
-      "price_usd": 4891.8,
-      "last_updated": 1770229201
+      "price_usd": 4889.36,
+      "last_updated": 1770229466
     },
     "usd1-wlfi": {
       "coin_id": "usd1-wlfi",
-      "price_usd": 0.99868,
-      "last_updated": 1770229201
+      "price_usd": 0.999121,
+      "last_updated": 1770229466
     },
     "xdai": {
       "coin_id": "xdai",
-      "price_usd": 0.999675,
-      "last_updated": 1770229201
+      "price_usd": 0.999673,
+      "last_updated": 1770229466
     },
     "staked-ether": {
       "coin_id": "staked-ether",
-      "price_usd": 2081.34,
-      "last_updated": 1770229201
+      "price_usd": 2081.4,
+      "last_updated": 1770229466
     },
     "wrapped-bitcoin": {
       "coin_id": "wrapped-bitcoin",
-      "price_usd": 72461,
-      "last_updated": 1770229201
+      "price_usd": 72407,
+      "last_updated": 1770229466
     },
     "dai": {
       "coin_id": "dai",
-      "price_usd": 0.999654,
-      "last_updated": 1770229201
+      "price_usd": 0.999184,
+      "last_updated": 1770229466
     }
   },
   "wallets": [
@@ -500,6 +724,18 @@
       "timestamp": 1770229201266,
       "total_value": 30065.996696810296,
       "snapshot_data": "{\"wallets\":{\"1\":30065.996696810296},\"coins\":{\"USDT\":{\"amount\":10039.52347099,\"value\":10018.661341217283},\"USDC\":{\"amount\":10039.46394445,\"value\":10035.458198336164},\"DAI\":{\"amount\":10015.34246575,\"value\":10011.877157256851}}}"
+    },
+    {
+      "id": 1770229466447,
+      "timestamp": 1770229466447,
+      "total_value": 30063.0966001357,
+      "snapshot_data": "{\"wallets\":{\"1\":30063.0966001357},\"coins\":{\"USDT\":{\"amount\":10039.52347099,\"value\":10020.478494965531},\"USDC\":{\"amount\":10039.46394445,\"value\":10035.448158872221},\"DAI\":{\"amount\":10015.34246575,\"value\":10007.169946297947}}}"
+    },
+    {
+      "id": 1770229466773,
+      "timestamp": 1770229466773,
+      "total_value": 30063.0966001357,
+      "snapshot_data": "{\"wallets\":{\"1\":30063.0966001357},\"coins\":{\"USDT\":{\"amount\":10039.52347099,\"value\":10020.478494965531},\"USDC\":{\"amount\":10039.46394445,\"value\":10035.448158872221},\"DAI\":{\"amount\":10015.34246575,\"value\":10007.169946297947}}}"
     }
   ],
   "api_keys": [],
