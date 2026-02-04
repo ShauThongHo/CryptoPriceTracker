@@ -11,8 +11,10 @@
  */
 
 import axios from 'axios';
+import readline from 'readline';
 
-const BACKEND_URL = 'http://localhost:3000';
+// Get backend URL from command line argument or use default
+const BACKEND_URL = process.argv[2] || 'http://localhost:3000';
 const EXCHANGE_NAME = 'okx';
 
 async function testBackendOKX() {
@@ -81,7 +83,7 @@ async function testBackendOKX() {
     
     try {
       const startTime = Date.now();
-      const balanceResponse = await axios.get(`${BACKEND_URL}/api/exchange/balance/${EXCHANGE_NAME}`);
+      const balanceResponse = await axios.get(`${BACKEND_URL}/api/exchange/${EXCHANGE_NAME}/balance`);
       const duration = Date.now() - startTime;
       
       console.log(`   ✅ Balance fetched successfully! (${duration}ms)`);

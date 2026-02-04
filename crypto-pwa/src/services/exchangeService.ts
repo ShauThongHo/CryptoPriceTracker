@@ -133,10 +133,43 @@ class ExchangeService {
 
   /**
    * Fetch balances from an exchange
-   * For OKX: fetches from all account types (funding, trading, financial)
+   * Uses backend API if available, falls back to direct CCXT if not
    */
   async fetchBalances(exchangeName: string): Promise<ExchangeBalance[]> {
+    const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
     try {
+      // Try backend API first if enabled
+      if (USE_BACKEND) {
+        try {
+          console.log(`[Exchange] Fetching ${exchangeName} balance from backend...`);
+          const response = await fetch(`${API_BASE_URL}/api/exchange/${exchangeName}/balance`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && Array.isArray(data.data)) {
+              console.log(`[Exchange] ✅ Got ${data.count} assets from backend for ${exchangeName}`);
+              return data.data.map((item: any) => ({
+                symbol: item.symbol,
+                free: item.free || 0,
+                used: item.used || 0,
+                total: item.total || 0,
+              }));
+            }
+          } else if (response.status === 404) {
+            console.warn(`[Exchange] API key not found in backend for ${exchangeName}`);
+          } else {
+            console.warn(`[Exchange] Backend API failed: ${response.status}`);
+          }
+        } catch (backendError) {
+          console.warn('[Exchange] Backend unavailable, falling back to direct CCXT:', backendError);
+        }
+      }
+
+      // Fallback to direct CCXT call (original logic)
+      console.log(`[Exchange] Using direct CCXT for ${exchangeName}...`);
+      
       // Get API key from database
       const apiKeyRecord = await dbOperations.getApiKeyByExchange(exchangeName);
       if (!apiKeyRecord) {
