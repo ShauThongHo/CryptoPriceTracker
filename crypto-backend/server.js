@@ -225,17 +225,8 @@ app.use(rateLimitMiddleware);
 
 // Serve static files from React build (if available)
 const distPath = path.join(__dirname, 'dist');
-app.use(express.static(distPath, {
-  maxAge: 0,
-  etag: false,
-  lastModified: false,
-  setHeaders: (res) => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
-}));
-console.log(`[STATIC] 📁 Serving frontend from: ${distPath} (cache disabled)`);
+app.use(express.static(distPath));
+console.log(`[STATIC] 📁 Serving frontend from: ${distPath}`);
 
 // Request logging middleware (after static to avoid logging static files)
 app.use((req, res, next) => {
