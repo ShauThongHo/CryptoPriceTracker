@@ -224,9 +224,9 @@ app.use(express.json({ limit: '10mb' })); // Support large sync payloads
 app.use(rateLimitMiddleware);
 
 // Serve static files from React build (if available)
-const publicPath = path.join(__dirname, 'public');
-app.use(express.static(publicPath));
-console.log(`[STATIC] 📁 Serving frontend from: ${publicPath}`);
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+console.log(`[STATIC] 📁 Serving frontend from: ${distPath}`);
 
 // Request logging middleware (after static to avoid logging static files)
 app.use((req, res, next) => {
