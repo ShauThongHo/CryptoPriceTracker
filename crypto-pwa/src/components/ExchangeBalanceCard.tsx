@@ -1,4 +1,4 @@
-import { RefreshCw, TrendingUp, Wallet } from 'lucide-react';
+import { RefreshCw, TrendingUp, Wallet, AlertCircle, CheckCircle, XCircle, Info } from 'lucide-react';
 import { useExchangeSync } from '../hooks/useExchangeSync';
 import { usePrices } from '../hooks/usePrices';
 import { useEffect, useState } from 'react';
@@ -17,17 +17,28 @@ export default function ExchangeBalanceCard() {
   const { balances, isSyncing, lastSyncTime, error, refresh } = useExchangeSync();
   const { prices } = usePrices();
   const [assetsWithPrices, setAssetsWithPrices] = useState<ExchangeAssetWithPrice[]>([]);
+  const [showDebug, setShowDebug] = useState(true); // 默认显示调试信息
+  
+  // 环境变量检查
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
 
-  // Calculate USD values
+  // Enrich balances with price data
   useEffect(() => {
+    if (balances.length === 0 || prices.length === 0) {
+      setAssetsWithPrices([]);
+      return;
+    }
+
     const enriched = balances.map(balance => {
-      const priceData = prices.find(p => p.symbol.toUpperCase() === balance.symbol.toUpperCase());
-      const priceUsd = priceData?.priceUsd;
-      
+      const priceData = prices.find(p => p.symbol === balance.symbol);
+      const priceUsd = priceData?.priceUsd || 0;
+      const valueUsd = balance.total * priceUsd;
+
       return {
         ...balance,
         priceUsd,
-        valueUsd: priceUsd ? balance.total * priceUsd : undefined,
+        valueUsd,
       };
     });
 
@@ -43,20 +54,12 @@ export default function ExchangeBalanceCard() {
     }).format(value);
   };
 
-  const formatNumber = (value: number, decimals = 8) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: decimals,
-    }).format(value);
-  };
-
   const formatTime = (timestamp: number | null) => {
     if (!timestamp) return 'Never';
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString();
+    return new Date(timestamp).toLocaleTimeString();
   };
 
-  // Group by exchange
+  // Group assets by exchange
   const groupedByExchange = assetsWithPrices.reduce((acc, asset) => {
     if (!acc[asset.exchange]) {
       acc[asset.exchange] = [];
@@ -65,17 +68,13 @@ export default function ExchangeBalanceCard() {
     return acc;
   }, {} as Record<string, ExchangeAssetWithPrice[]>);
 
-  // Calculate total value per exchange
+  // Calculate totals per exchange
   const exchangeTotals = Object.entries(groupedByExchange).map(([exchange, assets]) => {
     const total = assets.reduce((sum, asset) => sum + (asset.valueUsd || 0), 0);
     return { exchange, total, assetCount: assets.length };
   });
 
   const grandTotal = exchangeTotals.reduce((sum, ex) => sum + ex.total, 0);
-
-  if (balances.length === 0 && !isSyncing) {
-    return null; // Don't show if no exchange balances
-  }
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50 overflow-hidden">
@@ -95,17 +94,26 @@ export default function ExchangeBalanceCard() {
               </p>
             </div>
           </div>
-          <button
-            onClick={refresh}
-            disabled={isSyncing}
-            className="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-lg transition-colors disabled:opacity-50"
-            aria-label="Refresh balances"
-          >
-            <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-lg transition-colors"
+              aria-label="Toggle debug"
+            >
+              <Info className="w-5 h-5" />
+            </button>
+            <button
+              onClick={refresh}
+              disabled={isSyncing}
+              className="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-lg transition-colors disabled:opacity-50"
+              aria-label="Refresh balances"
+            >
+              <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        {/* Total Value */}
+        {/* Grand Total */}
         {grandTotal > 0 && (
           <div className="mt-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Value</div>
@@ -128,68 +136,164 @@ export default function ExchangeBalanceCard() {
         )}
       </div>
 
+      {/* Debug Panel */}
+      {showDebug && (
+        <div className="p-4 bg-gray-900 text-gray-100 border-b border-purple-700/50">
+          <div className="text-sm font-mono space-y-2">
+            <div className="font-bold text-purple-400 mb-2">🔍 调试信息 (Debug Info)</div>
+            
+            {/* 环境配置 */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                {USE_BACKEND ? <CheckCircle className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span>Backend Enabled: {USE_BACKEND ? 'true' : 'false'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {API_BASE_URL ? <CheckCircle className="w-4 h-4 text-green-400" /> : <AlertCircle className="w-4 h-4 text-yellow-400" />}
+                <span>API URL: {API_BASE_URL || '(empty - using relative)'}</span>
+              </div>
+            </div>
+
+            {/* 同步状态 */}
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-purple-400 font-semibold mb-1">同步状态:</div>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Ready'}</span>
+              </div>
+              <div>Last Sync: {lastSyncTime ? new Date(lastSyncTime).toLocaleTimeString() : 'Never'}</div>
+            </div>
+
+            {/* 余额数据 */}
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-purple-400 font-semibold mb-1">余额数据:</div>
+              <div>Balances Count: {balances.length}</div>
+              {balances.length > 0 ? (
+                <div className="mt-1 space-y-1">
+                  {balances.map((b, i) => (
+                    <div key={i} className="text-xs">
+                      {b.exchange}/{b.symbol}: {b.total}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-yellow-400">⚠️ 没有余额数据！检查控制台日志</div>
+              )}
+            </div>
+
+            {/* 价格数据 */}
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-purple-400 font-semibold mb-1">价格数据:</div>
+              <div>Prices Count: {prices.length}</div>
+              {prices.length > 0 && (
+                <div className="text-xs">
+                  {prices.slice(0, 3).map(p => `${p.symbol}:$${p.priceUsd}`).join(', ')}
+                  {prices.length > 3 && '...'}
+                </div>
+              )}
+            </div>
+
+            {/* 错误信息 */}
+            {error && (
+              <div className="border-t border-gray-700 pt-2 mt-2">
+                <div className="text-red-400 font-semibold mb-1">错误:</div>
+                <div className="text-red-300 text-xs">{error}</div>
+              </div>
+            )}
+
+            {/* 检查清单 */}
+            <div className="border-t border-gray-700 pt-2 mt-2">
+              <div className="text-purple-400 font-semibold mb-1">检查清单:</div>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2">
+                  {USE_BACKEND ? '✅' : '❌'}
+                  <span>VITE_USE_BACKEND = true</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {API_BASE_URL ? '✅' : '⚠️'}
+                  <span>VITE_API_BASE_URL 已设置</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {balances.length > 0 ? '✅' : '❌'}
+                  <span>收到余额数据</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!error ? '✅' : '❌'}
+                  <span>无错误</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-700 pt-2 mt-2 text-xs text-gray-400">
+              💡 提示: 打开浏览器控制台(F12)查看 [ExchangeSync] 日志
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Exchange Balances */}
       <div className="p-4 space-y-4">
+        {balances.length === 0 && !isSyncing && (
+          <div className="text-center py-8">
+            <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+            <div className="text-gray-700 dark:text-gray-300 font-semibold mb-2">
+              未找到交易所余额
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <div>请检查上方的调试信息</div>
+              <div>确保:</div>
+              <div>1. 后端服务器正在运行</div>
+              <div>2. OKX API key 已保存</div>
+              <div>3. 环境变量配置正确</div>
+            </div>
+          </div>
+        )}
+        
         {Object.entries(groupedByExchange).map(([exchange, assets]) => {
           const exchangeTotal = assets.reduce((sum, asset) => sum + (asset.valueUsd || 0), 0);
-
+          
           return (
-            <div key={exchange} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div key={exchange} className="space-y-2">
               {/* Exchange Header */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100 uppercase">
-                      {exchange}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      ({assets.length} assets)
-                    </span>
-                  </div>
-                  {exchangeTotal > 0 && (
-                    <span className="font-semibold text-purple-600 dark:text-purple-400">
-                      {formatCurrency(exchangeTotal)}
-                    </span>
-                  )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 uppercase">
+                    {exchange}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {assets.length} assets
+                  </span>
+                </div>
+                <div className="font-semibold text-purple-600 dark:text-purple-400">
+                  {formatCurrency(exchangeTotal)}
                 </div>
               </div>
 
-              {/* Assets */}
-              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {/* Assets List */}
+              <div className="space-y-1.5">
                 {assets.map((asset, idx) => (
-                  <div key={`${asset.symbol}-${idx}`} className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {asset.symbol}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {formatNumber(asset.total)} {asset.symbol}
-                        </div>
-                        {asset.free > 0 || asset.used > 0 ? (
-                          <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                            Free: {formatNumber(asset.free, 4)} | 
-                            Used: {formatNumber(asset.used, 4)}
-                          </div>
-                        ) : null}
+                  <div
+                    key={`${asset.exchange}-${asset.symbol}-${idx}`}
+                    className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {asset.symbol}
                       </div>
-                      <div className="text-right">
-                        {asset.valueUsd !== undefined ? (
-                          <>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">
-                              {formatCurrency(asset.valueUsd)}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              @ {formatCurrency(asset.priceUsd || 0)}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">
-                            Price unavailable
-                          </div>
-                        )}
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {asset.total.toFixed(8)}
                       </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {formatCurrency(asset.valueUsd || 0)}
+                      </div>
+                      {asset.priceUsd && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          @ {formatCurrency(asset.priceUsd)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
