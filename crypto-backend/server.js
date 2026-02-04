@@ -224,7 +224,7 @@ app.use(express.json({ limit: '10mb' })); // Support large sync payloads
 app.use(rateLimitMiddleware);
 
 // Serve static files from React build (if available)
-const distPath = path.join(__dirname, 'dist');
+const distPath = path.join(__dirname, 'public');
 app.use(express.static(distPath));
 console.log(`[STATIC] 📁 Serving frontend from: ${distPath}`);
 
@@ -1112,7 +1112,7 @@ app.get('*', (req, res) => {
       !req.path.startsWith('/coins') && 
       !req.path.startsWith('/fetch') && 
       !req.path.startsWith('/db')) {
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    const indexPath = path.join(__dirname, 'public', 'index.html');
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('[SPA] Error serving index.html:', err);
