@@ -990,7 +990,10 @@ app.get('/api/exchange/:exchange/balance', async (req, res) => {
     const exchangeConfig = {
       apiKey: apiKeyRecord.apiKey,
       secret: apiKeyRecord.apiSecret,
-      enableRateLimit: true
+      enableRateLimit: true,
+      options: {
+        defaultType: 'spot', // Set default to spot trading
+      }
     };
     
     if (apiKeyRecord.password) {
