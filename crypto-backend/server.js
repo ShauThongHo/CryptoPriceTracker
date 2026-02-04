@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
 import ccxt from 'ccxt';
+import fs from 'fs';
 import { 
   initDatabase, 
   closeDatabase, 
@@ -1096,6 +1097,70 @@ app.get('/api/exchange/:exchange/balance', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+// ==================== DEBUG HELPERS (ADMIN) ====================
+// Minimal admin protection: requires process.env.ADMIN_KEY or must be localhost
+function isAdminRequest(req) {
+  const adminKey = process.env.ADMIN_KEY || null;
+  if (adminKey) {
+    const header = (req.get && req.get('x-admin-key')) || req.headers['x-admin-key'];
+    if (header && header === adminKey) return true;
+  }
+  const ip = (req.ip || req.connection.remoteAddress || '').toString();
+  if (ip === '127.0.0.1' || ip === '::1' || ip.endsWith('::ffff:127.0.0.1')) return true;
+  return false;
+}
+
+// List backup files (database.json backups)
+app.get('/debug/list-backups', (req, res) => {
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'Forbidden' });
+  try {
+    const files = fs.readdirSync(__dirname).filter(f => f.toLowerCase().startsWith('database'));
+    res.json({ success: true, files });
+  } catch (err) {
+    console.error('[DEBUG] list-backups error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Restore database from a backup file (safe copy + reload)
+app.post('/debug/restore-db', (req, res) => {
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'Forbidden' });
+  try {
+    const { file } = req.body || {};
+    if (!file) return res.status(400).json({ success: false, error: 'file parameter required' });
+    const safeFile = path.join(__dirname, path.basename(file));
+    const target = path.join(__dirname, 'database.json');
+    if (!fs.existsSync(safeFile)) return res.status(404).json({ success: false, error: 'Backup file not found' });
+
+    // Backup current db before overwrite
+    const backupNow = path.join(__dirname, `database.json.restore.${Date.now()}`);
+    fs.copyFileSync(target, backupNow);
+
+    fs.copyFileSync(safeFile, target);
+    // Reload database into memory
+    initDatabase();
+
+    const stats = getDatabaseStats();
+    res.json({ success: true, message: `Restored from ${file}`, stats });
+  } catch (err) {
+    console.error('[DEBUG] restore-db error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Reload database from disk (reinitialize in-memory data from database.json)
+app.post('/debug/reload-db', (req, res) => {
+  if (!isAdminRequest(req)) return res.status(403).json({ success: false, error: 'Forbidden' });
+  try {
+    initDatabase();
+    const stats = getDatabaseStats();
+    res.json({ success: true, message: 'Database reloaded from disk', stats });
+  } catch (err) {
+    console.error('[DEBUG] reload-db error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
