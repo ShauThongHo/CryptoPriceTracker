@@ -25,22 +25,19 @@ export default function ExchangeBalanceCard() {
 
   // Enrich balances with price data
   useEffect(() => {
-    if (balances.length === 0 || prices.length === 0) {
-      setAssetsWithPrices([]);
-      return;
-    }
+    const enriched = balances.length > 0 && prices.length > 0
+      ? balances.map(balance => {
+          const priceData = prices.find(p => p.symbol === balance.symbol);
+          const priceUsd = priceData?.priceUsd || 0;
+          const valueUsd = balance.total * priceUsd;
 
-    const enriched = balances.map(balance => {
-      const priceData = prices.find(p => p.symbol === balance.symbol);
-      const priceUsd = priceData?.priceUsd || 0;
-      const valueUsd = balance.total * priceUsd;
-
-      return {
-        ...balance,
-        priceUsd,
-        valueUsd,
-      };
-    });
+          return {
+            ...balance,
+            priceUsd,
+            valueUsd,
+          };
+        })
+      : [];
 
     setAssetsWithPrices(enriched);
   }, [balances, prices]);
