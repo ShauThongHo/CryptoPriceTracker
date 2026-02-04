@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Balance 测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .warning { color: #f59e0b; font-weight: bold; }
+        pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .refresh-btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Exchange Balance Card 调试测试</h1>
+    
+    <div class="test-section">
+        <h2>1️⃣ 前端页面检查</h2>
+        <p>访问: <a href="http://192.168.0.54:3000" target="_blank">http://192.168.0.54:3000</a></p>
+        <p>然后打开浏览器控制台 (F12)，应该看到每 5 秒的同步日志</p>
+    </div>
+
+    <div class="test-section">
+        <h2>2️⃣ 后端 API 测试</h2>
+        <button class="refresh-btn" onclick="testBackendAPI()">🔄 测试后端 API</button>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3️⃣ 文件部署检查</h2>
+        <button class="refresh-btn" onclick="checkDeployment()">🔍 检查部署文件</button>
+        <div id="deploy-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4️⃣ 实时控制台日志</h2>
+        <p>打开主页面后，你应该在控制台看到：</p>
+        <pre>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ExchangeSync] 🎬 组件挂载 | Component mounted
+[ExchangeSync] 配置检查:
+  - USE_BACKEND: true
+  - API_BASE_URL: http://192.168.0.54:3000
+  - SYNC_INTERVAL: 5000 ms
+[ExchangeSync] ✅ 启动自动同步...
+[ExchangeSync] 🚀 开始同步 | Starting sync...
+[ExchangeSync] 🌐 请求 okx 余额:
+  完整URL: http://192.168.0.54:3000/api/exchange/okx/balance
+[ExchangeSync] 📡 响应状态: 200 OK
+[ExchangeSync] ✅ okx: 3 个资产
+[ExchangeSync] ✅ 同步完成
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>5️⃣ 预期显示效果</h2>
+        <p>在 Dashboard 页面，你应该看到紫色的 <strong>Exchange Balances</strong> 卡片：</p>
+        <ul>
+            <li>✅ Backend Enabled: true</li>
+            <li>✅ API URL: http://192.168.0.54:3000</li>
+            <li>🟢 Ready</li>
+            <li>Balances Count: 3</li>
+            <li>显示 XAUT, BTC, USDT 三个币种</li>
+        </ul>
+    </div>
+
+    <script>
+        async function testBackendAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p>⏳ 测试中...</p>';
+            
+            try {
+                const response = await fetch('http://192.168.0.54:3000/api/exchange/okx/balance');
+                const data = await response.json();
+                
+                let html = '<h3 class="success">✅ 后端 API 正常工作！</h3>';
+                html += '<p><strong>状态码:</strong> ' + response.status + '</p>';
+                html += '<p><strong>资产数量:</strong> ' + data.count + '</p>';
+                html += '<h4>返回数据:</h4>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.count === 3) {
+                    html += '<p class="success">✅ 收到 3 个资产，符合预期！</p>';
+                } else {
+                    html += '<p class="warning">⚠️ 资产数量: ' + data.count + '，预期是 3</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<h3 class="error">❌ 后端 API 错误</h3><pre>' + error + '</pre>';
+            }
+        }
+
+        async function checkDeployment() {
+            const resultDiv = document.getElementById('deploy-result');
+            resultDiv.innerHTML = '<p>⏳ 检查中...</p>';
+            
+            try {
+                // Check if the JS file exists
+                const response = await fetch('http://192.168.0.54:3000/assets/index-BOoBFHZV.js', { method: 'HEAD' });
+                
+                let html = '';
+                if (response.ok) {
+                    html += '<p class="success">✅ 关键 JS 文件已部署</p>';
+                    html += '<p><strong>文件:</strong> index-BOoBFHZV.js</p>';
+                    html += '<p><strong>大小:</strong> ' + Math.round(response.headers.get('content-length') / 1024) + ' KB</p>';
+                } else {
+                    html += '<p class="error">❌ JS 文件未找到</p>';
+                }
+                
+                // Check main page
+                const pageResponse = await fetch('http://192.168.0.54:3000/');
+                if (pageResponse.ok) {
+                    html += '<p class="success">✅ 主页可访问</p>';
+                } else {
+                    html += '<p class="error">❌ 主页无法访问</p>';
+                }
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = '<h3 class="error">❌ 检查失败</h3><pre>' + error + '</pre>';
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            testBackendAPI();
+        };
+    </script>
+</body>
+</html>
