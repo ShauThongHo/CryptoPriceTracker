@@ -1,6 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { exchangeService } from '../services/exchangeService';
-import { dbOperations } from '../db/db';
 
 const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -40,38 +38,32 @@ export function useExchangeSync() {
     try {
       setStatus(prev => ({ ...prev, isSyncing: true, error: null }));
 
-      // Get all saved API keys from database
-      const apiKeys = await dbOperations.getAllApiKeys();
-      
-      if (apiKeys.length === 0) {
-        console.log('[ExchangeSync] No exchange API keys found');
-        setStatus(prev => ({ 
-          ...prev, 
-          isSyncing: false, 
-          lastSyncTime: Date.now(),
-          balances: [] 
-        }));
-        return;
-      }
-
       const allBalances: any[] = [];
 
+      // Hardcode OKX for now - we know it exists
+      const exchanges = ['okx'];
+      
       // Fetch balances for each exchange
-      for (const apiKey of apiKeys) {
+      for (const exchange of exchanges) {
         try {
-          console.log(`[ExchangeSync] Fetching ${apiKey.exchange} balances...`);
+          console.log(`[ExchangeSync] Fetching ${exchange} balances from ${API_BASE_URL}/api/exchange/${exchange}/balance`);
           
           // Use backend API endpoint
-          const response = await fetch(`${API_BASE_URL}/api/exchange/${apiKey.exchange}/balance`);
+          const url = `${API_BASE_URL}/api/exchange/${exchange}/balance`;
+          const response = await fetch(url);
+          
+          console.log(`[ExchangeSync] Response status: ${response.status}`);
           
           if (response.ok) {
             const data = await response.json();
+            console.log(`[ExchangeSync] Response data:`, data);
+            
             if (data.success && Array.isArray(data.data)) {
-              console.log(`[ExchangeSync] ✅ ${apiKey.exchange}: ${data.count} assets`);
+              console.log(`[ExchangeSync] ✅ ${exchange}: ${data.count} assets found`);
               
               // Add exchange name to each balance
               const exchangeBalances = data.data.map((item: any) => ({
-                exchange: apiKey.exchange,
+                exchange: exchange,
                 symbol: item.symbol,
                 total: item.total || 0,
                 free: item.free || 0,
@@ -79,14 +71,20 @@ export function useExchangeSync() {
               }));
               
               allBalances.push(...exchangeBalances);
+              console.log(`[ExchangeSync] Added ${exchangeBalances.length} balances`);
+            } else {
+              console.warn(`[ExchangeSync] Invalid data format from ${exchange}`);
             }
           } else {
-            console.warn(`[ExchangeSync] Failed to fetch ${apiKey.exchange}: ${response.status}`);
+            const errorText = await response.text();
+            console.warn(`[ExchangeSync] Failed to fetch ${exchange}: ${response.status} - ${errorText}`);
           }
         } catch (error) {
-          console.error(`[ExchangeSync] Error fetching ${apiKey.exchange}:`, error);
+          console.error(`[ExchangeSync] Error fetching ${exchange}:`, error);
         }
       }
+
+      console.log(`[ExchangeSync] Total balances collected: ${allBalances.length}`);
 
       setStatus({
         isSyncing: false,
@@ -108,8 +106,11 @@ export function useExchangeSync() {
   // Initial sync and periodic sync
   useEffect(() => {
     if (!USE_BACKEND) {
+      console.log('[ExchangeSync] Backend is disabled (VITE_USE_BACKEND=false)');
       return;
     }
+
+    console.log('[ExchangeSync] Starting auto-sync with interval:', SYNC_INTERVAL);
 
     // Initial sync
     syncExchangeBalances();
@@ -120,6 +121,7 @@ export function useExchangeSync() {
     }, SYNC_INTERVAL);
 
     return () => {
+      console.log('[ExchangeSync] Cleaning up interval');
       clearInterval(intervalId);
     };
   }, [syncExchangeBalances]);

@@ -22,7 +22,7 @@ export default function ExchangeBalanceCard() {
   useEffect(() => {
     const enriched = balances.map(balance => {
       const priceData = prices.find(p => p.symbol.toUpperCase() === balance.symbol.toUpperCase());
-      const priceUsd = priceData?.price;
+      const priceUsd = priceData?.priceUsd;
       
       return {
         ...balance,
