@@ -73,7 +73,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/CryptoPrice.git
-cd CryptoPrice
+cd CryptoPriceTracker
 ```
 
 ### 2. Backend Setup
