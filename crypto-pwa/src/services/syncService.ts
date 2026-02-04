@@ -323,7 +323,19 @@ export class SyncService {
   /**
    * Update an asset on the backend
    */
-  async updateAsset(id: number, updates: { symbol?: string; amount?: number; tags?: string; notes?: string }): Promise<boolean> {
+  async updateAsset(id: number, updates: { 
+    symbol?: string; 
+    amount?: number; 
+    tags?: string; 
+    notes?: string;
+    earnConfig?: {
+      enabled: boolean;
+      apy: number;
+      interestType: 'compound' | 'simple';
+      payoutIntervalHours: number;
+      lastPayoutAt?: number;
+    };
+  }): Promise<boolean> {
     if (!SYNC_ENABLED) return false;
 
     try {

@@ -54,22 +54,31 @@ export function useAssetOperations() {
   const addAsset = async (
     asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
-    // Optimistic UI: Add to local database immediately
-    const localId = await dbOperations.addAsset(asset);
-    
-    // Push to server in background
+    // Server-first approach: Try to save to server first if sync is enabled
     if (syncService.isSyncEnabled()) {
       try {
         const serverAsset = await syncService.createAsset(asset) as { id: number } | null;
-        // Update local ID to match server ID if different
-        if (serverAsset && serverAsset.id !== localId) {
-          console.log(`[Asset] Syncing ID: local=${localId}, server=${serverAsset.id}`);
+        if (serverAsset && serverAsset.id) {
+          // Save to local with server ID
+          const now = new Date();
+          await db.assets.add({
+            id: serverAsset.id,
+            ...asset,
+            createdAt: now,
+            updatedAt: now,
+          });
+          console.log(`[Asset] ✅ Saved to server and local (ID: ${serverAsset.id})`);
+          return serverAsset.id;
         }
       } catch (error) {
-        console.error('[Asset] Failed to sync to server:', error);
+        console.error('[Asset] ⚠️ Server save failed, saving locally only:', error);
+        // Fall back to local-only save
       }
     }
     
+    // Fallback: Save to local database only
+    const localId = await dbOperations.addAsset(asset);
+    console.warn(`[Asset] ⚠️ Saved locally only (ID: ${localId}) - sync to server later`);
     return localId;
   };
 
@@ -77,10 +86,7 @@ export function useAssetOperations() {
     id: number,
     updates: Partial<Omit<Asset, 'id'>>
   ) => {
-    // Optimistic UI: Update local database immediately
-    await dbOperations.updateAsset(id, updates);
-    
-    // Push to server in background
+    // Server-first approach: Try to update server first if sync is enabled
     if (syncService.isSyncEnabled()) {
       try {
         await syncService.updateAsset(id, {
@@ -88,25 +94,33 @@ export function useAssetOperations() {
           amount: updates.amount,
           tags: updates.tags,
           notes: updates.notes,
+          earnConfig: updates.earnConfig,
         });
+        console.log(`[Asset] ✅ Updated on server (ID: ${id})`);
       } catch (error) {
-        console.error('[Asset] Failed to update on server:', error);
+        console.error('[Asset] ⚠️ Server update failed:', error);
+        // Continue to update locally anyway
       }
     }
+    
+    // Always update local database
+    await dbOperations.updateAsset(id, updates);
   };
 
   const deleteAsset = async (id: number) => {
-    // Optimistic UI: Delete from local database immediately
-    await dbOperations.deleteAsset(id);
-    
-    // Push to server in background
+    // Server-first approach: Try to delete from server first if sync is enabled
     if (syncService.isSyncEnabled()) {
       try {
         await syncService.deleteAsset(id);
+        console.log(`[Asset] ✅ Deleted from server (ID: ${id})`);
       } catch (error) {
-        console.error('[Asset] Failed to delete on server:', error);
+        console.error('[Asset] ⚠️ Server delete failed:', error);
+        // Continue to delete locally anyway
       }
     }
+    
+    // Always delete from local database
+    await dbOperations.deleteAsset(id);
   };
 
   return {

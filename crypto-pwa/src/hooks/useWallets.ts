@@ -35,40 +35,46 @@ export function useWallet(id: number | undefined) {
  */
 export function useWalletOperations() {
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt'>) => {
-    // Optimistic UI: Add to local database immediately
-    const localId = await dbOperations.addWallet(wallet);
-    
-    // Push to server in background
+    // Server-first approach: Try to save to server first if sync is enabled
     if (syncService.isSyncEnabled()) {
       try {
         const serverWallet = await syncService.createWallet(wallet) as { id: number } | null;
-        // Update local ID to match server ID if different
-        if (serverWallet && serverWallet.id !== localId) {
-          console.log(`[Wallet] Syncing ID: local=${localId}, server=${serverWallet.id}`);
-          // Note: In production, you might want to handle ID conflicts more carefully
+        if (serverWallet && serverWallet.id) {
+          // Save to local with server ID
+          await db.wallets.add({
+            id: serverWallet.id,
+            ...wallet,
+            createdAt: new Date(),
+          });
+          console.log(`[Wallet] ✅ Saved to server and local (ID: ${serverWallet.id})`);
+          return serverWallet.id;
         }
       } catch (error) {
-        console.error('[Wallet] Failed to sync to server:', error);
-        // Local data is still saved, will sync later
+        console.error('[Wallet] ⚠️ Server save failed, saving locally only:', error);
+        // Fall back to local-only save
       }
     }
     
+    // Fallback: Save to local database only
+    const localId = await dbOperations.addWallet(wallet);
+    console.warn(`[Wallet] ⚠️ Saved locally only (ID: ${localId}) - sync to server later`);
     return localId;
   };
 
   const deleteWallet = async (id: number) => {
-    // Optimistic UI: Delete from local database immediately
-    await dbOperations.deleteWallet(id);
-    
-    // Push to server in background
+    // Server-first approach: Try to delete from server first if sync is enabled
     if (syncService.isSyncEnabled()) {
       try {
         await syncService.deleteWallet(id);
+        console.log(`[Wallet] ✅ Deleted from server (ID: ${id})`);
       } catch (error) {
-        console.error('[Wallet] Failed to delete on server:', error);
-        // Local deletion is done, server will sync later
+        console.error('[Wallet] ⚠️ Server delete failed:', error);
+        // Continue to delete locally anyway
       }
     }
+    
+    // Always delete from local database
+    await dbOperations.deleteWallet(id);
   };
 
   return {
