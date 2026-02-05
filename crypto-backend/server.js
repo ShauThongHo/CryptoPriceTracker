@@ -43,6 +43,7 @@ import {
   getAllTrackedCoinIds
 } from './db.js';
 import { updatePrices } from './fetcher.js';
+import { startExchangeImporter, stopExchangeImporter, triggerManualImport } from './exchange-importer.js';
 
 // ES Module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -1001,6 +1002,17 @@ app.get('/api/exchange/:exchange/balance', async (req, res) => {
       exchangeConfig.password = apiKeyRecord.password;
     }
     
+    // OKX-specific: Add required options for API v5
+    if (exchangeName.toLowerCase() === 'okx') {
+      exchangeConfig.options = {
+        ...exchangeConfig.options,
+        // OKX requires these for API v5
+        defaultType: 'spot',
+        // Ensure proper timestamp handling
+        recvWindow: 5000,
+      };
+    }
+    
     const exchangeInstance = new ExchangeClass(exchangeConfig);
     const balances = [];
     
@@ -1264,17 +1276,23 @@ app.listen(PORT, '0.0.0.0', () => {
     .catch(err => {
       console.error('[STARTUP] ❌ Error during initial update:', err);
     });
+  
+  // Start exchange balance auto-importer
+  console.log('[STARTUP] 🔄 Starting exchange balance auto-importer...');
+  startExchangeImporter();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('\n🛑 SIGTERM received. Shutting down gracefully...');
+  stopExchangeImporter();
   closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('\n🛑 SIGINT received. Shutting down gracefully...');
+  stopExchangeImporter();
   closeDatabase();
   process.exit(0);
 });

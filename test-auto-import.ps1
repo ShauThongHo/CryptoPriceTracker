@@ -132,5 +132,5 @@ if ($wallets.count -eq 0 -or $assets.count -eq 0) {
     Write-Host ""
 }
 
-Write-Host "📖 详细排查步骤请查看: TROUBLESHOOT_AUTO_IMPORT.md" -ForegroundColor Cyan
+Write-Host "📖 详细排查步骤请查看: TROUBLESHOOT_AUTO_IMPORT.md"
 Write-Host ""
