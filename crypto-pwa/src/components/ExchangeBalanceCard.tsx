@@ -1,6 +1,8 @@
-import { RefreshCw, TrendingUp, Wallet, AlertCircle, CheckCircle, XCircle, Info } from 'lucide-react';
+import { RefreshCw, TrendingUp, Wallet, AlertCircle, CheckCircle, XCircle, Info, Download } from 'lucide-react';
 import { useExchangeSync } from '../hooks/useExchangeSync';
 import { usePrices } from '../hooks/usePrices';
+import { useWallets } from '../hooks/useWallets';
+import { useAssetOperations } from '../hooks/useAssets';
 import { useEffect, useState } from 'react';
 
 interface ExchangeAssetWithPrice {
@@ -16,8 +18,12 @@ interface ExchangeAssetWithPrice {
 export default function ExchangeBalanceCard() {
   const { balances, isSyncing, lastSyncTime, error, refresh } = useExchangeSync();
   const { prices } = usePrices();
+  const { wallets } = useWallets();
+  const { addAsset } = useAssetOperations();
   const [assetsWithPrices, setAssetsWithPrices] = useState<ExchangeAssetWithPrice[]>([]);
   const [showDebug, setShowDebug] = useState(true); // 默认显示调试信息
+  const [importing, setImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
   
   // 环境变量检查
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -72,6 +78,73 @@ export default function ExchangeBalanceCard() {
   });
 
   const grandTotal = exchangeTotals.reduce((sum, ex) => sum + ex.total, 0);
+
+  // 導入餘額到錢包
+  const importBalancesToWallet = async (exchange: string) => {
+    setImporting(true);
+    setImportSuccess(null);
+    
+    try {
+      // 動態導入 wallet operations
+      const { useWalletOperations } = await import('../hooks/useWallets');
+      const { addWallet } = useWalletOperations();
+      
+      // 查找對應的交易所錢包
+      let targetWallet = wallets.find(w => 
+        w.type === 'exchange' && 
+        w.exchangeName?.toLowerCase() === exchange.toLowerCase()
+      );
+      
+      let walletId: number | undefined;
+      
+      if (!targetWallet) {
+        // 創建新的交易所錢包
+        console.log(`[ExchangeBalanceCard] Creating new wallet for ${exchange}`);
+        walletId = await addWallet({
+          name: exchange.toUpperCase(),
+          type: 'exchange' as const,
+          exchangeName: exchange,
+        });
+      } else {
+        walletId = targetWallet.id!;
+      }
+      
+      if (!walletId) {
+        throw new Error('Failed to get wallet ID');
+      }
+      
+      // 獲取該交易所的餘額
+      const exchangeBalances = groupedByExchange[exchange] || [];
+      let imported = 0;
+      
+      console.log(`[ExchangeBalanceCard] Importing ${exchangeBalances.length} assets to wallet ${walletId}`);
+      
+      // 為每個餘額創建資產
+      for (const balance of exchangeBalances) {
+        if (balance.total > 0) {
+          await addAsset({
+            walletId: walletId,
+            symbol: balance.symbol,
+            amount: balance.total,
+            tags: 'exchange',
+            notes: `Imported from ${exchange} at ${new Date().toLocaleString()}`,
+          });
+          imported++;
+        }
+      }
+      
+      console.log(`[ExchangeBalanceCard] Successfully imported ${imported} assets`);
+      setImportSuccess(`✅ 成功導入 ${imported} 個資產到錢包！`);
+      setTimeout(() => setImportSuccess(null), 5000);
+      
+    } catch (err) {
+      console.error('[ExchangeBalanceCard] Import failed:', err);
+      setImportSuccess(`❌ 導入失敗: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setTimeout(() => setImportSuccess(null), 5000);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border border-purple-200 dark:border-purple-700/50 overflow-hidden">
@@ -129,6 +202,16 @@ export default function ExchangeBalanceCard() {
         {error && (
           <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded text-xs text-red-600 dark:text-red-400">
             {error}
+          </div>
+        )}
+        
+        {importSuccess && (
+          <div className={`mt-2 p-2 rounded text-xs ${
+            importSuccess.startsWith('✅') 
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-600 dark:text-green-400'
+              : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400'
+          }`}>
+            {importSuccess}
           </div>
         )}
       </div>
@@ -262,8 +345,19 @@ export default function ExchangeBalanceCard() {
                     {assets.length} assets
                   </span>
                 </div>
-                <div className="font-semibold text-purple-600 dark:text-purple-400">
-                  {formatCurrency(exchangeTotal)}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => importBalancesToWallet(exchange)}
+                    disabled={importing || isSyncing}
+                    className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="導入到錢包"
+                  >
+                    <Download className="w-3 h-3" />
+                    {importing ? '導入中...' : '導入'}
+                  </button>
+                  <div className="font-semibold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(exchangeTotal)}
+                  </div>
                 </div>
               </div>
 
