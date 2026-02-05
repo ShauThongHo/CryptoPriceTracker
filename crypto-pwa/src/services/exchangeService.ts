@@ -329,6 +329,9 @@ class ExchangeService {
     shouldEncrypt: boolean,
     password?: string
   ): Promise<void> {
+    const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+    
     let finalApiKey = apiKey;
     let finalApiSecret = apiSecret;
     let finalPassword = password;
@@ -344,7 +347,37 @@ class ExchangeService {
       }
     }
 
-    // Check if API key already exists
+    // 1️⃣ First: Save to backend server (server-first strategy)
+    if (USE_BACKEND) {
+      try {
+        console.log(`[Exchange] 🔑 Saving API key for ${exchange} to backend...`);
+        const response = await fetch(`${API_BASE_URL}/api/exchange/apikey`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            exchange,
+            apiKey,  // Save plain text to backend (backend doesn't need encryption)
+            apiSecret,
+            password: password || null,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(`Backend save failed: ${error.error}`);
+        }
+
+        const result = await response.json();
+        console.log(`[Exchange] ✅ Backend saved API key for ${exchange}:`, result);
+      } catch (backendError) {
+        console.error('[Exchange] ❌ Failed to save API key to backend:', backendError);
+        // Don't throw - continue to save locally even if backend fails
+      }
+    }
+
+    // 2️⃣ Second: Save to local IndexedDB
     const existing = await dbOperations.getApiKeyByExchange(exchange);
     
     if (existing) {
@@ -354,6 +387,7 @@ class ExchangeService {
         password: finalPassword,
         isEncrypted: shouldEncrypt,
       });
+      console.log(`[Exchange] 💾 Updated API key in local IndexedDB for ${exchange}`);
     } else {
       await dbOperations.addApiKey({
         exchange,
@@ -362,6 +396,7 @@ class ExchangeService {
         password: finalPassword,
         isEncrypted: shouldEncrypt,
       });
+      console.log(`[Exchange] 💾 Added API key to local IndexedDB for ${exchange}`);
     }
   }
 }
