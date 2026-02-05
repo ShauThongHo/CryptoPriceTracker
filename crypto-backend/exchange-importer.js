@@ -193,32 +193,38 @@ function findOrCreateExchangeWallet(exchangeName) {
 
 /**
  * Import asset to wallet (create or update)
+ * Only updates assets with auto_sync flag to avoid interfering with manual entries
  */
 function importAsset(walletId, balance) {
   const assets = getAllAssets();
+  
+  // Find existing auto-synced asset (must have auto_sync = true)
   const existing = assets.find(a => 
     a.wallet_id === walletId && 
-    a.symbol.toLowerCase() === balance.symbol.toLowerCase()
+    a.symbol.toLowerCase() === balance.symbol.toLowerCase() &&
+    a.auto_sync === true  // Only update auto-synced assets
   );
   
   if (existing) {
-    // Update existing asset
-    if (Math.abs(existing.quantity - balance.total) > 0.00000001) {
-      updateAsset(existing.id, { quantity: balance.total });
+    // Update existing auto-synced asset
+    if (Math.abs(existing.amount - balance.total) > 0.00000001) {
+      updateAsset(existing.id, { amount: balance.total });
       console.log(`[IMPORTER]     🔄 Updated ${balance.symbol}: ${balance.total}`);
       return true;
     }
     return false;
   } else {
-    // Create new asset
+    // Create new asset with auto_sync flag
     createAsset(
       walletId,
       balance.symbol,
       balance.total,
-      0, // purchase_price unknown for exchange imports
-      new Date().toISOString().split('T')[0] // today
+      null, // tags
+      null, // notes
+      null, // earnConfig
+      true  // autoSync = true
     );
-    console.log(`[IMPORTER]     ➕ Added ${balance.symbol}: ${balance.total}`);
+    console.log(`[IMPORTER]     ➕ Added ${balance.symbol}: ${balance.total} (auto-sync)`);
     return true;
   }
 }

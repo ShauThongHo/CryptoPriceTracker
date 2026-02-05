@@ -320,7 +320,7 @@ function calculateInterest() {
 /**
  * Create a new asset
  */
-export function createAsset(walletId, symbol, amount, tags = null, notes = null, earnConfig = null) {
+export function createAsset(walletId, symbol, amount, tags = null, notes = null, earnConfig = null, autoSync = false) {
   const now = Math.floor(Date.now() / 1000);
   const id = db.data.assets.length > 0 ? Math.max(...db.data.assets.map(a => a.id)) + 1 : 1;
   
@@ -331,6 +331,7 @@ export function createAsset(walletId, symbol, amount, tags = null, notes = null,
     amount,
     tags,
     notes,
+    auto_sync: autoSync, // Mark if this asset is auto-synced from exchange
     created_at: now,
     updated_at: now
   };
