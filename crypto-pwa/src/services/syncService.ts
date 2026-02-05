@@ -22,6 +22,7 @@ export interface SyncState {
     amount: number;
     tags?: string;
     notes?: string;
+    auto_sync?: boolean;
     created_at: number;
     createdAt?: Date;
     updated_at: number;
@@ -180,6 +181,7 @@ export class SyncService {
         amount: a.amount,
         tags: a.tags || null,
         notes: a.notes || null,
+        auto_sync: a.autoSync || false,
         created_at: a.createdAt ? Math.floor(a.createdAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
         updated_at: a.updatedAt ? Math.floor(a.updatedAt.getTime() / 1000) : Math.floor(Date.now() / 1000),
       }));

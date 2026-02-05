@@ -24,6 +24,7 @@ export interface Asset {
   amount: number;
   tags?: string; // e.g., 'Staked', 'Liquid', 'DeFi', 'Trading', 'HODL', 'earn'
   notes?: string;
+  autoSync?: boolean; // true if auto-synced from exchange API
   earnConfig?: EarnConfig; // Optional: For Earn/Staking positions
   createdAt: Date;
   updatedAt: Date;

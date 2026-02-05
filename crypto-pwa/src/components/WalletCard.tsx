@@ -150,6 +150,11 @@ export default function WalletCard({
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatNumber(asset.amount)} {asset.symbol}
                       </span>
+                      {asset.autoSync && (
+                        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                          Auto-Sync
+                        </span>
+                      )}
                       {asset.tags && (
                         <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium">
                           {asset.tags}

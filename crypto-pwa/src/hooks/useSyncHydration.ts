@@ -114,6 +114,7 @@ export function useSyncHydration() {
           amount: asset.amount,
           tags: asset.tags,
           notes: asset.notes,
+          autoSync: asset.auto_sync || false,
           createdAt: new Date(asset.created_at * 1000),
           updatedAt: new Date(asset.updated_at * 1000),
         });
