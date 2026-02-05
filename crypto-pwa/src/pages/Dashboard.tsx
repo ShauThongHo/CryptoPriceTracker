@@ -3,6 +3,7 @@ import { usePortfolioSummary, useWallets } from '../hooks/useAssets';
 import { DashboardSkeleton } from '../components/LoadingSkeletons';
 import { usePortfolioValue, usePriceSync } from '../hooks/usePriceSync';
 import { usePrices } from '../hooks/usePrices';
+import { useExchangeSync } from '../hooks/useExchangeSync';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useState, useEffect } from 'react';
 import type { Asset, Wallet as WalletType } from '../db/db';
@@ -18,6 +19,9 @@ export default function Dashboard() {
   const { isLoading: syncingPrices, lastUpdate, refreshPrices } = usePriceSync();
   const { prices } = usePrices(); // Add this to trigger updates when prices change
   const { wallets } = useWallets();
+  
+  // Auto-sync exchange balances and import to wallet (runs every 5 seconds in background)
+  useExchangeSync();
   const [nextRefreshIn, setNextRefreshIn] = useState<number>(300); // seconds
   const [canRefresh, setCanRefresh] = useState<boolean>(false);
   const [walletValues, setWalletValues] = useState<Map<number, number>>(new Map());
