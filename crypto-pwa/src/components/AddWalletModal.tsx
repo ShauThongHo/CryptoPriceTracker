@@ -18,7 +18,7 @@ export default function AddWalletModal({ isOpen, onClose, onAdd }: AddWalletModa
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // API Connection state
-  const [selectedExchange, setSelectedExchange] = useState('binance');
+  const [selectedExchange, setSelectedExchange] = useState('okx');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [passphrase, setPassphrase] = useState('');
@@ -194,7 +194,7 @@ export default function AddWalletModal({ isOpen, onClose, onAdd }: AddWalletModa
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="My Binance Account"
+                  placeholder="My OKX Account"
                   required
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 />
@@ -209,12 +209,19 @@ export default function AddWalletModal({ isOpen, onClose, onAdd }: AddWalletModa
                   onChange={(e) => setSelectedExchange(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
-                  {exchangeService.getSupportedExchanges().map((ex) => (
-                    <option key={ex} value={ex}>
-                      {ex.charAt(0).toUpperCase() + ex.slice(1)}
-                    </option>
-                  ))}
+                  {exchangeService.getSupportedExchanges().map((ex) => {
+                    const isAvailable = ex === 'okx';
+                    return (
+                      <option key={ex} value={ex} disabled={!isAvailable}>
+                        {ex.charAt(0).toUpperCase() + ex.slice(1)}
+                        {!isAvailable && ' (Coming Soon)'}
+                      </option>
+                    );
+                  })}
                 </select>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  目前只支持 OKX，其他交易所即将推出
+                </p>
               </div>
 
               <div>
