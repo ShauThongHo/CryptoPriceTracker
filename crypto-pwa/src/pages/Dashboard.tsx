@@ -9,7 +9,6 @@ import type { Asset, Wallet as WalletType } from '../db/db';
 import { priceService } from '../services/priceService';
 import PortfolioChart from '../components/PortfolioChart';
 import PlatformDetailModal from '../components/PlatformDetailModal';
-import ExchangeBalanceCard from '../components/ExchangeBalanceCard';
 import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
@@ -197,9 +196,6 @@ export default function Dashboard() {
 
       {hasAssets ? (
         <div className="space-y-6">
-          {/* Exchange Balances Card (Auto-updating every 5s) */}
-          <ExchangeBalanceCard />
-
           {/* Asset Allocation Pie Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center gap-2 mb-4">

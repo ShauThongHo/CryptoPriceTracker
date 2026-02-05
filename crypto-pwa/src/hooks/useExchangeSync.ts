@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { db } from '../db/db';
 
 const USE_BACKEND = import.meta.env.VITE_USE_BACKEND === 'true';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -20,6 +21,7 @@ interface ExchangeSyncStatus {
 /**
  * Hook to automatically sync exchange balances
  * Fetches OKX and other exchange balances every 5 seconds
+ * Auto-imports balances to wallet without manual interaction
  */
 export function useExchangeSync() {
   const [status, setStatus] = useState<ExchangeSyncStatus>({
@@ -28,6 +30,79 @@ export function useExchangeSync() {
     error: null,
     balances: [],
   });
+
+  // Auto-import balances to wallet
+  const autoImportBalances = useCallback(async (balances: Array<{exchange: string; symbol: string; total: number}>) => {
+    try {
+      console.log('[ExchangeSync] 🔄 開始自動導入餘額...');
+      
+      // Group by exchange
+      const byExchange = balances.reduce((acc, b) => {
+        if (!acc[b.exchange]) acc[b.exchange] = [];
+        acc[b.exchange].push(b);
+        return acc;
+      }, {} as Record<string, typeof balances>);
+      
+      for (const [exchange, exchangeBalances] of Object.entries(byExchange)) {
+        // Find or create wallet
+        let wallet = await db.wallets
+          .where('type').equals('exchange')
+          .and(w => w.exchangeName?.toLowerCase() === exchange.toLowerCase())
+          .first();
+        
+        if (!wallet) {
+          // Create new exchange wallet
+          console.log(`[ExchangeSync] 📝 創建新錢包: ${exchange.toUpperCase()}`);
+          const walletId = await db.wallets.add({
+            name: exchange.toUpperCase(),
+            type: 'exchange',
+            exchangeName: exchange,
+            createdAt: new Date(),
+          });
+          wallet = await db.wallets.get(walletId);
+        }
+        
+        if (!wallet || !wallet.id) continue;
+        
+        // Get existing assets for this wallet
+        const existingAssets = await db.assets
+          .where('walletId').equals(wallet.id)
+          .toArray();
+        
+        // Update or create assets
+        for (const balance of exchangeBalances) {
+          if (balance.total <= 0) continue;
+          
+          const existing = existingAssets.find(a => a.symbol === balance.symbol);
+          
+          if (existing && existing.id) {
+            // Update existing asset
+            await db.assets.update(existing.id, {
+              amount: balance.total,
+              updatedAt: new Date(),
+            });
+            console.log(`[ExchangeSync] ✏️ 更新資產: ${balance.symbol} = ${balance.total}`);
+          } else {
+            // Create new asset
+            await db.assets.add({
+              walletId: wallet.id,
+              symbol: balance.symbol,
+              amount: balance.total,
+              tags: 'exchange',
+              notes: `Auto-imported from ${exchange}`,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            console.log(`[ExchangeSync] ➕ 新增資產: ${balance.symbol} = ${balance.total}`);
+          }
+        }
+      }
+      
+      console.log('[ExchangeSync] ✅ 自動導入完成');
+    } catch (error) {
+      console.error('[ExchangeSync] ❌ 自動導入失敗:', error);
+    }
+  }, []);
 
   const syncExchangeBalances = useCallback(async () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -107,6 +182,12 @@ export function useExchangeSync() {
       }
 
       console.log(`[ExchangeSync] 📊 总计余额数: ${allBalances.length}`);
+      
+      // Auto-import balances to wallet
+      if (allBalances.length > 0) {
+        await autoImportBalances(allBalances);
+      }
+      
       console.log('[ExchangeSync] ✅ 同步完成');
 
       setStatus({
@@ -128,7 +209,7 @@ export function useExchangeSync() {
     } finally {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
-  }, []);
+  }, [autoImportBalances]);
 
   // Initial sync and periodic sync
   useEffect(() => {
