@@ -1112,6 +1112,38 @@ app.get('/api/exchange/:exchange/balance', async (req, res) => {
   }
 });
 
+// Trigger manual exchange balance import
+app.post('/api/exchange/import', async (req, res) => {
+  try {
+    console.log('[SERVER] 🔄 Manual exchange import triggered via API');
+    await triggerManualImport();
+    
+    // Return updated assets
+    const assets = getAllAssets();
+    const wallets = getAllWallets();
+    
+    res.json({
+      success: true,
+      message: 'Exchange balances imported successfully',
+      assets: {
+        count: assets.length,
+        data: assets
+      },
+      wallets: {
+        count: wallets.length,
+        data: wallets
+      },
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error('[SERVER] Error during manual import:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ==================== DEBUG HELPERS (ADMIN) ====================
 // Minimal admin protection: requires process.env.ADMIN_KEY or must be localhost
 function isAdminRequest(req) {

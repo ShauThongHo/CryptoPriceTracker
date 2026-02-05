@@ -7,7 +7,7 @@
 import ccxt from 'ccxt';
 import { getAllApiKeys, getAllWallets, createWallet, getAllAssets, createAsset, updateAsset } from './db.js';
 
-const IMPORT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const IMPORT_INTERVAL = 30 * 1000; // 30 seconds for testing (change to 5*60*1000 for production)
 let importTimer = null;
 
 /**
@@ -108,6 +108,7 @@ async function fetchExchangeBalance(exchangeName, apiKey, apiSecret, password) {
   if (exchangeName.toLowerCase() === 'okx') {
     try {
       const tradingBalance = await exchange.fetchBalance();
+      console.log(`[IMPORTER]     Trading balance raw:`, JSON.stringify(tradingBalance.total));
       for (const [currency, total] of Object.entries(tradingBalance.total || {})) {
         if (total > 0) {
           balances.push({
@@ -116,14 +117,16 @@ async function fetchExchangeBalance(exchangeName, apiKey, apiSecret, password) {
             used: tradingBalance.used[currency] || 0,
             total: total,
           });
+          console.log(`[IMPORTER]     ✓ ${currency}: ${total} (trading)`);
         }
       }
     } catch (err) {
-      console.error(`[IMPORTER]     Trading account error: ${err.message}`);
+      console.error(`[IMPORTER]     ❌ Trading account error: ${err.message}`);
     }
     
     try {
       const fundingBalance = await exchange.fetchBalance({ type: 'funding' });
+      console.log(`[IMPORTER]     Funding balance raw:`, JSON.stringify(fundingBalance.total));
       for (const [currency, total] of Object.entries(fundingBalance.total || {})) {
         if (total > 0) {
           const existing = balances.find(b => b.symbol === currency);
@@ -131,6 +134,7 @@ async function fetchExchangeBalance(exchangeName, apiKey, apiSecret, password) {
             existing.free += fundingBalance.free[currency] || 0;
             existing.used += fundingBalance.used[currency] || 0;
             existing.total += total;
+            console.log(`[IMPORTER]     ✓ ${currency}: ${total} (funding merged)`);
           } else {
             balances.push({
               symbol: currency,
@@ -138,11 +142,12 @@ async function fetchExchangeBalance(exchangeName, apiKey, apiSecret, password) {
               used: fundingBalance.used[currency] || 0,
               total: total,
             });
+            console.log(`[IMPORTER]     ✓ ${currency}: ${total} (funding)`);
           }
         }
       }
     } catch (err) {
-      console.error(`[IMPORTER]     Funding account error: ${err.message}`);
+      console.error(`[IMPORTER]     ❌ Funding account error: ${err.message}`);
     }
   } else {
     // Standard exchange balance fetch
@@ -251,9 +256,14 @@ export function stopExchangeImporter() {
 }
 
 /**
- * Trigger manual import
+ * Trigger manual import (for API endpoint)
  */
 export async function triggerManualImport() {
-  console.log('[IMPORTER] 🔄 Manual import triggered');
-  await importAllExchangeBalances();
+  console.log('[IMPORTER] 🔄 Manual import triggered by user');
+  return await importAllExchangeBalances();
 }
+
+/**
+ * Export the main import function for direct use
+ */
+export { importAllExchangeBalances };
