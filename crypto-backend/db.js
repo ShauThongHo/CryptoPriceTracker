@@ -392,6 +392,7 @@ export function updateAsset(id, updates) {
   if (updates.tags !== undefined) asset.tags = updates.tags;
   if (updates.notes !== undefined) asset.notes = updates.notes;
   if (updates.earnConfig !== undefined) asset.earnConfig = updates.earnConfig;
+  if (updates.auto_sync !== undefined) asset.auto_sync = updates.auto_sync;
   
   asset.updated_at = Math.floor(Date.now() / 1000);
   

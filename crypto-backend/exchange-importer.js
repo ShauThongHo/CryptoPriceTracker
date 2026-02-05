@@ -199,11 +199,29 @@ function importAsset(walletId, balance) {
   const assets = getAllAssets();
   
   // Find existing auto-synced asset (must have auto_sync = true)
-  const existing = assets.find(a => 
+  let existing = assets.find(a => 
     a.wallet_id === walletId && 
     a.symbol.toLowerCase() === balance.symbol.toLowerCase() &&
-    a.auto_sync === true  // Only update auto-synced assets
+    a.auto_sync === true
   );
+  
+  // Migration: If no auto_sync asset found, check for old assets without the flag
+  if (!existing) {
+    const oldAssets = assets.filter(a => 
+      a.wallet_id === walletId && 
+      a.symbol.toLowerCase() === balance.symbol.toLowerCase() &&
+      a.auto_sync === undefined  // Old asset without flag
+    );
+    
+    // If there's exactly one old asset without manual indicators (no notes, no earn config)
+    // assume it's an old auto-sync asset and migrate it
+    if (oldAssets.length === 1 && !oldAssets[0].notes && !oldAssets[0].earnConfig) {
+      existing = oldAssets[0];
+      // Mark it as auto-synced
+      updateAsset(existing.id, { auto_sync: true });
+      console.log(`[IMPORTER]     🔄 Migrated old asset ${balance.symbol} to auto-sync`);
+    }
+  }
   
   if (existing) {
     // Update existing auto-synced asset
